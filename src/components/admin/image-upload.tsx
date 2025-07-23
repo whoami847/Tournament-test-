@@ -13,6 +13,49 @@ interface ImageUploadProps {
   onUploadComplete: (url: string) => void;
 }
 
+// Helper function to compress images, moved to a shared location conceptually
+const compressImage = (file: File, quality = 0.7): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new window.Image();
+            img.src = event.target?.result as string;
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                if (!ctx) return reject(new Error('Failed to get canvas context.'));
+                
+                // Keep aspect ratio
+                let { width, height } = img;
+                const maxDim = 1280; // Max dimension for general images
+                if (width > height) {
+                    if (width > maxDim) {
+                        height = Math.round(height * (maxDim / width));
+                        width = maxDim;
+                    }
+                } else {
+                    if (height > maxDim) {
+                        width = Math.round(width * (maxDim / height));
+                        height = maxDim;
+                    }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob((blob) => {
+                    if (!blob) return reject(new Error('Canvas to Blob failed.'));
+                    resolve(blob);
+                }, 'image/jpeg', quality);
+            };
+            img.onerror = (err) => reject(err);
+        };
+        reader.onerror = (err) => reject(err);
+    });
+};
+
 export function ImageUpload({ initialImageUrl = '', onUploadComplete }: ImageUploadProps) {
   const [imageUrl, setImageUrl] = useState<string>(initialImageUrl);
   const [uploading, setUploading] = useState(false);
@@ -22,7 +65,7 @@ export function ImageUpload({ initialImageUrl = '', onUploadComplete }: ImageUpl
   const { toast } = useToast();
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+    let file = event.target.files?.[0];
     if (!file) return;
 
     setUploading(true);
@@ -30,8 +73,11 @@ export function ImageUpload({ initialImageUrl = '', onUploadComplete }: ImageUpl
     setProgress(0);
 
     try {
-      // The path can be customized, e.g., `banners/${file.name}`
-      const downloadURL = await uploadImage(file, `uploads/${Date.now()}-${file.name}`, setProgress);
+      const blobToUpload = await compressImage(file);
+      const fileName = file.name.split('.').slice(0, -1).join('.') + '.jpg';
+      const compressedFile = new File([blobToUpload], fileName, { type: 'image/jpeg' });
+      
+      const downloadURL = await uploadImage(compressedFile, `uploads/${Date.now()}-${compressedFile.name}`, setProgress);
       setImageUrl(downloadURL);
       onUploadComplete(downloadURL);
       toast({

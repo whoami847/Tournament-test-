@@ -57,13 +57,16 @@ const HomeHeader = () => {
 
     return (
         <header className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10 border-2 border-primary">
-                <AvatarImage src={user?.photoURL || ''} alt={displayName} data-ai-hint="wizard character" />
-                <AvatarFallback>{fallback}</AvatarFallback>
-            </Avatar>
-            <div><h1 className="font-bold">{displayName}</h1><p className="text-sm text-muted-foreground">Player</p></div>
-            </div>
+            <Link href="/profile" className="flex items-center gap-3 group">
+                <Avatar className="h-10 w-10 border-2 border-primary group-hover:border-amber-400 transition-colors">
+                    <AvatarImage src={user?.photoURL || ''} alt={displayName} data-ai-hint="wizard character" />
+                    <AvatarFallback>{fallback}</AvatarFallback>
+                </Avatar>
+                <div>
+                    <h1 className="font-bold group-hover:text-amber-400 transition-colors">{displayName}</h1>
+                    <p className="text-sm text-muted-foreground">Player</p>
+                </div>
+            </Link>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="relative rounded-full bg-card h-10 w-10">
@@ -160,7 +163,7 @@ const LiveEvents = ({tournaments}: {tournaments: Tournament[]}) => (
                               <CardContent className="absolute bottom-0 left-0 p-3 text-white w-full">
                                   <Badge className="mb-1 bg-red-500 text-white border-none font-bold animate-pulse">Live</Badge>
                                   <h4 className="font-bold truncate">{event.name}</h4>
-                                  <p className="text-xs text-white/70">{format(new Date(event.startDate), "dd.MM.yy '•' HH:mm")}</p>
+                                  <p className="text-xs text-white/70">{format(new Date(event.startDate as string), "dd.MM.yy '•' HH:mm")}</p>
                               </CardContent>
                               <Badge variant="secondary" className="absolute top-2 right-2 text-xs">{event.game}</Badge>
                           </Card>

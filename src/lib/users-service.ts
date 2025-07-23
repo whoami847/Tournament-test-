@@ -1,9 +1,10 @@
 import type { PlayerProfile } from '@/types';
-import { firestore } from './firebase';
+import { firestore, auth } from './firebase';
 import {
   collection,
   doc,
   getDoc,
+  getDocs,
   updateDoc,
   onSnapshot,
   query,
@@ -13,6 +14,7 @@ import {
   runTransaction,
   serverTimestamp
 } from 'firebase/firestore';
+import { sendPasswordResetEmail } from 'firebase/auth';
 import { toIsoString } from './utils';
 
 const usersCollection = collection(firestore, 'users');
