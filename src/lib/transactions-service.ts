@@ -1,7 +1,7 @@
 
 import type { Transaction, Order } from '@/types';
 import { firestore } from './firebase';
-import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, doc, setDoc } from 'firebase/firestore';
 import { toIsoString } from './utils';
 
 export const getTransactionsStream = (
@@ -36,11 +36,10 @@ export const getTransactionsStream = (
 // New service to handle orders
 const ordersCollection = collection(firestore, 'orders');
 
-export const createOrder = async (order: Omit<Order, 'id' | 'createdAt'>) => {
+export const createOrder = async (order: Omit<Order, 'id'>) => {
     const newOrderRef = doc(ordersCollection, order.tran_id);
-    await addDoc(ordersCollection, {
+    await setDoc(newOrderRef, {
         ...order,
-        createdAt: serverTimestamp(),
     });
     return newOrderRef.id;
 };

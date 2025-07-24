@@ -115,6 +115,7 @@ export interface Order {
   status: 'pending' | 'success' | 'fail' | 'cancelled';
   gateway: 'rupantorpay';
   createdAt: string;
+  gatewayResponse: any;
 }
 
 export interface Transaction {
