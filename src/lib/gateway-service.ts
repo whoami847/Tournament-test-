@@ -1,3 +1,4 @@
+
 import type { PaymentGatewaySettings } from '@/types';
 import { firestore } from './firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
@@ -11,10 +12,9 @@ export const getGatewaySettings = async (): Promise<Omit<PaymentGatewaySettings,
     }
     // Return default/empty settings if not found
     return {
-        name: '',
-        accessToken: '',
-        checkoutUrl: '',
-        verifyUrl: '',
+        name: 'RupantorPay',
+        storeId: '',
+        storePassword: '',
     };
 };
 

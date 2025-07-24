@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { firestore as db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { getGatewaySettings } from '@/lib/gateway-service';
 
 const RUPANTORPAY_API_URL = 'https://payment.rupantorpay.com/api/payment/checkout';
 
@@ -18,12 +19,17 @@ export async function POST(req: NextRequest) {
     if (!userDoc.exists()) {
       return NextResponse.json({ message: 'User not found' }, { status: 404 });
     }
+    
+    const gatewaySettings = await getGatewaySettings();
+    if (!gatewaySettings.storeId || !gatewaySettings.storePassword) {
+        return NextResponse.json({ message: 'Payment gateway is not configured. Please contact support.' }, { status: 500 });
+    }
 
     const tran_id = `${userId.substring(0, 5)}-${Date.now()}`;
 
     const payload = {
-      store_id: 'your_store_id', // Replace with your actual Store ID
-      store_passwd: 'your_password', // Replace with your actual Store Password
+      store_id: gatewaySettings.storeId,
+      store_passwd: gatewaySettings.storePassword,
       total_amount: amount,
       currency: 'BDT',
       tran_id,

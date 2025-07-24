@@ -1,3 +1,4 @@
+
 import type { Timestamp } from 'firebase/firestore';
 
 export type Game = string;
@@ -192,9 +193,8 @@ export interface UserTeam {
 export interface PaymentGatewaySettings {
   id: string;
   name: string;
-  accessToken: string;
-  checkoutUrl: string;
-  verifyUrl: string;
+  storeId: string;
+  storePassword: string;
 }
 
 export interface WithdrawMethod {

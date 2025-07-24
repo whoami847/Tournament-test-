@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -54,7 +55,7 @@ export default function AdminGatewayPage() {
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
                     <CardTitle>Payment Gateway Settings</CardTitle>
-                    <CardDescription>Manage your payment gateway configuration.</CardDescription>
+                    <CardDescription>Manage your RupantorPay payment gateway configuration.</CardDescription>
                 </div>
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
@@ -85,27 +86,24 @@ export default function AdminGatewayPage() {
                         <Skeleton className="h-8 w-1/3" />
                         <Skeleton className="h-8 w-2/3" />
                         <Skeleton className="h-8 w-full" />
-                        <Skeleton className="h-8 w-full" />
                     </div>
                 ) : settings ? (
                     <div className="space-y-6 text-sm">
                         <div className="flex flex-col gap-1 md:grid md:grid-cols-3 md:items-center md:gap-4">
                             <span className="font-medium text-muted-foreground">Provider Name</span>
-                            <span className="md:col-span-2 font-semibold">{settings.name}</span>
+                            <span className="md:col-span-2 font-semibold">{settings.name || 'Not Set'}</span>
                         </div>
                          <div className="flex flex-col gap-1 md:grid md:grid-cols-3 md:items-center md:gap-4">
-                            <span className="font-medium text-muted-foreground">Access Token</span>
+                            <span className="font-medium text-muted-foreground">Store ID</span>
                             <span className="md:col-span-2 font-mono text-xs bg-muted p-2 rounded-md break-all">
-                                {settings.accessToken ? '••••••••' + settings.accessToken.slice(-4) : 'Not Set'}
+                                {settings.storeId || 'Not Set'}
                             </span>
                         </div>
                         <div className="flex flex-col gap-1 md:grid md:grid-cols-3 md:items-center md:gap-4">
-                            <span className="font-medium text-muted-foreground">Checkout URL</span>
-                            <span className="md:col-span-2 font-mono text-xs break-all">{settings.checkoutUrl}</span>
-                        </div>
-                        <div className="flex flex-col gap-1 md:grid md:grid-cols-3 md:items-center md:gap-4">
-                            <span className="font-medium text-muted-foreground">Verify URL</span>
-                            <span className="md:col-span-2 font-mono text-xs break-all">{settings.verifyUrl}</span>
+                            <span className="font-medium text-muted-foreground">Store Password</span>
+                            <span className="md:col-span-2 font-mono text-xs bg-muted p-2 rounded-md break-all">
+                                {settings.storePassword ? '••••••••' + settings.storePassword.slice(-4) : 'Not Set'}
+                            </span>
                         </div>
                     </div>
                 ) : (
