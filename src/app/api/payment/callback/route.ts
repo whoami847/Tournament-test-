@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
   }
 
   const verifyPayload = {
-    store_id: 'your_store_id', // Replace with your actual store ID
+    store_id: 'your_store_id', // Replace with your actual store ID from settings
     store_passwd: gateway.storePassword,
     tran_id,
   };
