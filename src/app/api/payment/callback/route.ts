@@ -29,13 +29,13 @@ export async function GET(req: NextRequest) {
 
   // Verify payment with RupantorPay
   const gateway = await getEnabledGateway();
-  if (!gateway || !gateway.storePassword) {
+  if (!gateway || !gateway.storePassword || !gateway.storeId) {
     await updateDoc(orderRef, { status: 'FAILED' });
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/payment/fail`);
   }
 
   const verifyPayload = {
-    store_id: 'your_store_id', // Replace with your actual store ID from settings
+    store_id: gateway.storeId,
     store_passwd: gateway.storePassword,
     tran_id,
   };

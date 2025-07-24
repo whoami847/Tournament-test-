@@ -16,6 +16,7 @@ import { firestore } from './firebase';
 export interface Gateway {
   id: string;
   name: string;
+  storeId: string;
   storePassword?: string;
   isLive: boolean;
   enabled: boolean;

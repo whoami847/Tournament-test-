@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     }
 
     const gateway = await getEnabledGateway();
-    if (!gateway || !gateway.storePassword) {
+    if (!gateway || !gateway.storePassword || !gateway.storeId) {
       return NextResponse.json(
         { message: 'Payment gateway is not configured. Please contact support.' },
         { status: 500 }
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     const tran_id = `${userId.substring(0, 5)}-${Date.now()}`;
 
     const payload = {
-      store_id: 'your_store_id', // Replace with your actual store ID from settings
+      store_id: gateway.storeId,
       store_passwd: gateway.storePassword,
       total_amount: amount,
       currency: 'BDT',
