@@ -113,6 +113,8 @@ export interface Transaction {
   type: 'deposit' | 'withdrawal' | 'prize' | 'fee' | 'admin_adjustment';
   description: string;
   date: Timestamp | string;
+  status?: 'pending' | 'success' | 'failed';
+  gatewayTransactionId?: string;
 }
 
 export interface MatchResult {
