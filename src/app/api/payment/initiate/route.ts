@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { firestore as db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -21,8 +22,8 @@ export async function POST(req: NextRequest) {
     const tran_id = `${userId.substring(0, 5)}-${Date.now()}`;
 
     const payload = {
-      store_id: process.env.RUPANTORPAY_STORE_ID,
-      store_passwd: process.env.RUPANTORPAY_STORE_PASSWORD,
+      store_id: 'your_store_id', // Replace with your actual Store ID
+      store_passwd: 'your_password', // Replace with your actual Store Password
       total_amount: amount,
       currency: 'BDT',
       tran_id,
