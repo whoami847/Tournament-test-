@@ -19,6 +19,7 @@ export const getNotificationsStream = (
     const notifications: AppNotification[] = [];
     querySnapshot.forEach((doc) => {
       const data = doc.data();
+      // Basic client-side filtering can happen here if needed, but the query is simpler now.
       notifications.push({
         id: doc.id,
         ...data,
@@ -26,6 +27,25 @@ export const getNotificationsStream = (
       } as AppNotification);
     });
     callback(notifications);
+  }, (error) => {
+    console.error("Error fetching notifications:", error);
+    // If it's an index error, we can try a query without ordering
+    const simplerQ = query(notificationsCollection, where('userId', '==', userId), limit(10));
+    const unsub = onSnapshot(simplerQ, (snapshot) => {
+        const notifications: AppNotification[] = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          notifications.push({
+            id: doc.id,
+            ...data,
+            createdAt: (data.createdAt?.toDate() ?? new Date()).toISOString(),
+          } as AppNotification);
+        });
+        // client-side sort
+        notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        callback(notifications);
+    });
+    return unsub;
   });
 
   return unsubscribe;

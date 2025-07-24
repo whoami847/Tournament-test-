@@ -37,17 +37,23 @@ export const getUsersStream = (callback: (users: PlayerProfile[]) => void) => {
 };
 
 export const getTopPlayersStream = (callback: (players: PlayerProfile[]) => void, count: number = 3) => {
-  const q = query(usersCollection, where('role', '==', 'Player'), orderBy('winrate', 'desc'), limit(count));
+  // Query without composite index requirement. Filtering by role and then sorting client-side.
+  const q = query(usersCollection, where('role', '==', 'Player'), limit(count * 2)); // Fetch more to sort
   const unsubscribe = onSnapshot(q, (snapshot) => {
-    callback(snapshot.docs.map(processUserDoc));
+    const players = snapshot.docs.map(processUserDoc);
+    players.sort((a, b) => b.winrate - a.winrate);
+    callback(players.slice(0, count));
   });
   return unsubscribe;
 }
 
 export const getPlayersStream = (callback: (players: PlayerProfile[]) => void) => {
-  const q = query(usersCollection, where('role', '==', 'Player'), orderBy('winrate', 'desc'));
+  // Query without composite index requirement. Filtering by role and then sorting client-side.
+  const q = query(usersCollection, where('role', '==', 'Player'));
   const unsubscribe = onSnapshot(q, (snapshot) => {
-    callback(snapshot.docs.map(processUserDoc));
+    const players = snapshot.docs.map(processUserDoc);
+    players.sort((a, b) => b.winrate - a.winrate);
+    callback(players);
   });
   return unsubscribe;
 };
