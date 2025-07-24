@@ -106,6 +106,16 @@ export interface PlayerProfile {
   status: 'active' | 'banned';
 }
 
+export interface Order {
+  id: string;
+  userId: string;
+  amount: number;
+  tran_id: string;
+  status: 'pending' | 'success' | 'fail' | 'cancelled';
+  gateway: 'rupantorpay';
+  createdAt: string;
+}
+
 export interface Transaction {
   id: string;
   userId: string;

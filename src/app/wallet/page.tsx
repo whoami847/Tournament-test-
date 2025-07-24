@@ -5,8 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Banknote, Gamepad2, Gift, ArrowUp, ArrowDown, Landmark, CreditCard, Wallet, Globe, ChevronDown, ArrowLeft, ArrowRight, ChevronsRight, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import React, { useState, useEffect, useActionState, useRef } from 'react';
-import { useFormStatus } from 'react-dom';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -19,7 +18,6 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { createPaymentUrl } from "@/lib/payment-actions";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
@@ -36,19 +34,10 @@ import { format } from 'date-fns';
 
 // --- FORM COMPONENTS ---
 
-function SubmitButton() {
-    const { pending } = useFormStatus();
-    return (
-        <Button type="submit" size="lg" className="w-full" disabled={pending}>
-            {pending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</> : 'Proceed to Pay'}
-        </Button>
-    );
-}
-
-function AddMoneyForm({ profile }: { profile: PlayerProfile | null }) {
-    const createPaymentUrlWithUser = createPaymentUrl.bind(null, profile?.id ?? null);
-    const [state, formAction] = useActionState(createPaymentUrlWithUser, null);
+function AddMoneyForm({ profile, onSubmitting }: { profile: PlayerProfile | null, onSubmitting: (isSubmitting: boolean) => void }) {
+    const { toast } = useToast();
     const [amount, setAmount] = useState('');
+    const [error, setError] = useState<string | null>(null);
 
     const quickAmounts = [100, 200, 500, 1000];
 
@@ -56,11 +45,61 @@ function AddMoneyForm({ profile }: { profile: PlayerProfile | null }) {
         setAmount(value.toString());
     };
 
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setError(null);
+
+        if (!profile?.id) {
+            setError("User is not authenticated. Please log in again.");
+            return;
+        }
+
+        const numAmount = parseFloat(amount);
+        if (isNaN(numAmount) || numAmount < 10) {
+            setError("Amount is required and must be at least 10.");
+            return;
+        }
+
+        onSubmitting(true);
+
+        try {
+            const response = await fetch('/api/payment/initiate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount: numAmount, userId: profile.id }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.status === 'success' && data.data) {
+                // Redirect to payment gateway
+                window.location.href = data.data;
+            } else {
+                setError(data.message || 'Failed to initiate payment. Please try again.');
+                toast({
+                    title: 'Payment Error',
+                    description: data.message || 'An unexpected error occurred.',
+                    variant: 'destructive',
+                });
+                onSubmitting(false);
+            }
+        } catch (err) {
+            setError('Could not connect to the payment server. Please check your connection.');
+            toast({
+                title: 'Network Error',
+                description: 'Could not connect to the payment server.',
+                variant: 'destructive',
+            });
+            onSubmitting(false);
+        }
+    };
+
+
     return (
-        <form action={formAction} className="space-y-6 pt-2">
-            {state?.error && (
+        <form onSubmit={handleSubmit} className="space-y-6 pt-2">
+            {error && (
                 <Alert variant="destructive">
-                    <AlertDescription>{state.error}</AlertDescription>
+                    <AlertDescription>{error}</AlertDescription>
                 </Alert>
             )}
 
@@ -99,7 +138,9 @@ function AddMoneyForm({ profile }: { profile: PlayerProfile | null }) {
             </div>
             
             <div className="pt-4">
-                <SubmitButton />
+                 <Button type="submit" size="lg" className="w-full">
+                    Proceed to Pay
+                </Button>
             </div>
         </form>
     );
@@ -236,10 +277,12 @@ const WalletHeader = ({ profile }: { profile: PlayerProfile | null }) => (
 const CardStack = ({ balance, profile }: { balance: number, profile: PlayerProfile | null }) => {
     const [isFanned, setIsFanned] = useState(false);
     const [isWithdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
+    const [isAddMoneySubmitting, setAddMoneySubmitting] = useState(false);
 
     const handleAddMoneyOpenChange = (open: boolean) => {
         if (!open) {
             setIsFanned(false);
+            setAddMoneySubmitting(false);
         }
     };
     
@@ -334,7 +377,14 @@ const CardStack = ({ balance, profile }: { balance: number, profile: PlayerProfi
                                 </DialogDescription>
                             </DialogHeader>
                             <div className="px-6 pb-6">
-                                <AddMoneyForm profile={profile} />
+                                {isAddMoneySubmitting ? (
+                                    <div className="h-64 flex flex-col items-center justify-center gap-4">
+                                        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                                        <p className="text-muted-foreground">Redirecting to payment gateway...</p>
+                                    </div>
+                                ) : (
+                                    <AddMoneyForm profile={profile} onSubmitting={setAddMoneySubmitting} />
+                                )}
                             </div>
                         </DialogContent>
                     </Dialog>
