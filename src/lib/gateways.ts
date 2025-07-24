@@ -16,7 +16,6 @@ import { firestore } from './firebase';
 export interface Gateway {
   id: string;
   name: string;
-  storeId: string;
   storePassword?: string;
   isLive: boolean;
   enabled: boolean;
@@ -41,7 +40,6 @@ export const getEnabledGateway = async (): Promise<Gateway | null> => {
   return { 
     id: snapshot.docs[0].id, 
     name: docData.name,
-    storeId: docData.storeId,
     storePassword: docData.storePassword,
     isLive: docData.isLive,
     enabled: docData.enabled,

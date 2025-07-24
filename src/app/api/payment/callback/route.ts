@@ -35,13 +35,12 @@ export async function GET(req: NextRequest) {
 
   // Verify payment with RupantorPay
   const gateway = await getEnabledGateway();
-  if (!gateway || !gateway.storePassword || !gateway.storeId) {
+  if (!gateway || !gateway.storePassword) {
     await updateDoc(orderRef, { status: 'FAILED', gatewayResponse: 'Gateway not configured on server.' });
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/payment/fail`);
   }
 
   const verifyPayload = {
-    store_id: gateway.storeId,
     store_passwd: gateway.storePassword,
     tran_id,
   };

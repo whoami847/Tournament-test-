@@ -194,14 +194,12 @@ export interface UserTeam {
 export interface PaymentGatewaySettings {
   id: string;
   name: string;
-  storeId: string;
   storePassword: string;
 }
 
 export interface Gateway {
   id: string;
   name: string;
-  storeId: string;
   storePassword?: string;
   isLive: boolean;
   enabled: boolean;
