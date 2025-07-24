@@ -37,7 +37,15 @@ export const getEnabledGateway = async (): Promise<Gateway | null> => {
   if (snapshot.empty) {
     return null;
   }
-  return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as Gateway;
+  const docData = snapshot.docs[0].data();
+  return { 
+    id: snapshot.docs[0].id, 
+    name: docData.name,
+    storeId: docData.storeId,
+    storePassword: docData.storePassword,
+    isLive: docData.isLive,
+    enabled: docData.enabled,
+  } as Gateway;
 };
 
 export const addGateway = (gateway: Omit<Gateway, 'id'>) => {

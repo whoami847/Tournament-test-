@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,7 @@ export default function PaymentCancelPage() {
                 <CardContent>
                     <CardDescription className="mb-6">Your payment process was canceled. You can try again from your wallet.</CardDescription>
                     <Button asChild>
-                        <Link href="/wallet">Back to Wallet</Link>
+                        <Link href="/wallet/top-up">Back to Top-up</Link>
                     </Button>
                 </CardContent>
             </Card>

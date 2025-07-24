@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { type Gateway, addGateway, updateGateway } from '@/lib/gateways';
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode, useEffect } from 'react';
 
 interface GatewayDialogProps {
   gateway?: Gateway;
@@ -30,16 +30,32 @@ export function GatewayDialog({ gateway, children }: GatewayDialogProps) {
     control,
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<Omit<Gateway, 'id'>>({
     defaultValues: {
-      name: gateway?.name ?? 'RupantorPay',
-      storeId: gateway?.storeId ?? '',
-      storePassword: gateway?.storePassword ?? '',
-      isLive: gateway?.isLive ?? false,
-      enabled: gateway?.enabled ?? true,
+      name: 'RupantorPay',
+      storeId: '',
+      storePassword: '',
+      isLive: false,
+      enabled: true,
     },
   });
+  
+  useEffect(() => {
+    if (gateway) {
+      reset(gateway);
+    } else {
+      reset({
+        name: 'RupantorPay',
+        storeId: '',
+        storePassword: '',
+        isLive: false,
+        enabled: true,
+      });
+    }
+  }, [gateway, reset, open]);
+
 
   const onSubmit = async (data: Omit<Gateway, 'id'>) => {
     try {

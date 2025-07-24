@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     const gateway = await getEnabledGateway();
     if (!gateway || !gateway.storePassword || !gateway.storeId) {
       return NextResponse.json(
-        { message: 'Payment gateway is not configured. Please contact support.' },
+        { message: 'Payment gateway is not configured or enabled. Please contact support.' },
         { status: 500 }
       );
     }
