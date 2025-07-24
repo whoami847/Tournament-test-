@@ -19,7 +19,6 @@ export const getNotificationsStream = (
     const notifications: AppNotification[] = [];
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      // Basic client-side filtering can happen here if needed, but the query is simpler now.
       notifications.push({
         id: doc.id,
         ...data,
@@ -28,10 +27,10 @@ export const getNotificationsStream = (
     });
     callback(notifications);
   }, (error) => {
-    console.error("Error fetching notifications:", error);
-    // If it's an index error, we can try a query without ordering
-    const simplerQ = query(notificationsCollection, where('userId', '==', userId), limit(10));
-    const unsub = onSnapshot(simplerQ, (snapshot) => {
+    console.error("Error fetching notifications, falling back to simpler query:", error);
+    // Fallback query if the composite index doesn't exist.
+    const fallbackQuery = query(notificationsCollection, where('userId', '==', userId), limit(20));
+    const fallbackUnsubscribe = onSnapshot(fallbackQuery, (snapshot) => {
         const notifications: AppNotification[] = [];
         snapshot.forEach((doc) => {
           const data = doc.data();
@@ -41,11 +40,12 @@ export const getNotificationsStream = (
             createdAt: (data.createdAt?.toDate() ?? new Date()).toISOString(),
           } as AppNotification);
         });
-        // client-side sort
+        // Sort client-side
         notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        callback(notifications);
+        callback(notifications.slice(0, 10));
     });
-    return unsub;
+    // It's important to return the new unsubscribe function for the fallback
+    return fallbackUnsubscribe;
   });
 
   return unsubscribe;
