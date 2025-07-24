@@ -1,10 +1,8 @@
-
 'use client';
 
 import { AutomatedWalletTopUpForm } from '@/components/automated-wallet-top-up-form';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -24,27 +22,17 @@ export default function TopUpPage() {
         </Button>
         <h1 className="text-center text-2xl font-bold">Top-up Wallet</h1>
       </div>
-      <Tabs defaultValue="automated">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="automated">Automated Top-up</TabsTrigger>
-          <TabsTrigger value="manual" disabled>
-            Manual Top-up
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="automated">
-          <Card>
-            <CardHeader>
-              <CardTitle>Automated Top-up</CardTitle>
-              <CardDescription>
-                Enter the amount you want to add to your wallet.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <AutomatedWalletTopUpForm />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      <Card>
+        <CardHeader>
+          <CardTitle>Automated Top-up</CardTitle>
+          <CardDescription>
+            Enter the amount you want to add to your wallet.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AutomatedWalletTopUpForm />
+        </CardContent>
+      </Card>
     </div>
   );
 }
