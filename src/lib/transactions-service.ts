@@ -1,3 +1,4 @@
+
 import type { Transaction, Order } from '@/types';
 import { firestore } from './firebase';
 import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, doc } from 'firebase/firestore';
@@ -8,10 +9,10 @@ export const getTransactionsStream = (
   callback: (transactions: Transaction[]) => void
 ) => {
   const transactionsCollection = collection(firestore, 'transactions');
+  // Removed orderBy to avoid needing a composite index. Sorting is now done client-side.
   const q = query(
     transactionsCollection,
-    where('userId', '==', userId),
-    orderBy('date', 'desc')
+    where('userId', '==', userId)
   );
 
   const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -24,6 +25,8 @@ export const getTransactionsStream = (
         date: toIsoString(data.date),
       } as Transaction);
     });
+    // Sort transactions by date on the client side
+    transactions.sort((a, b) => new Date(b.date as string).getTime() - new Date(a.date as string).getTime());
     callback(transactions);
   });
 
