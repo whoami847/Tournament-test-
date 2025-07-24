@@ -31,6 +31,7 @@ import { getTransactionsStream } from "@/lib/transactions-service";
 import { createWithdrawalRequest } from '@/lib/withdraw-requests-service';
 import { getActiveWithdrawMethods } from '@/lib/withdraw-methods-service';
 import { format } from 'date-fns';
+import Link from "next/link";
 
 
 // --- SUB-COMPONENTS ---
@@ -115,8 +116,10 @@ const CardStack = ({ balance, profile }: { balance: number, profile: PlayerProfi
                 </div>
 
                 <div className="flex justify-start gap-4">
-                     <Button disabled className="bg-white/20 hover:bg-white/30 text-white font-bold text-xs h-8 px-3 backdrop-blur-sm rounded-md">
-                        <ArrowUp className="mr-2 h-4 w-4" /> Add Money
+                     <Button asChild className="bg-white/20 hover:bg-white/30 text-white font-bold text-xs h-8 px-3 backdrop-blur-sm rounded-md">
+                        <Link href="/wallet/top-up">
+                            <ArrowUp className="mr-2 h-4 w-4" /> Add Money
+                        </Link>
                     </Button>
                      <Button disabled variant="secondary" className="bg-white/20 hover:bg-white/30 text-white font-bold text-xs h-8 px-3 backdrop-blur-sm rounded-md">
                         <ArrowDown className="mr-2 h-4 w-4" /> Withdraw
@@ -148,7 +151,7 @@ const TransactionList = ({ transactions }: { transactions: Transaction[] }) => {
                             {transactionIcons[tx.type] || transactionIcons['fee']}
                             <div className="flex-grow">
                                 <p className="font-semibold">{tx.description}</p>
-                                <p className="text-sm text-muted-foreground">{format(new Date(tx.date), "PPP, p")}</p>
+                                <p className="text-sm text-muted-foreground">{format(new Date(tx.date as string), "PPP, p")}</p>
                             </div>
                             <p className={cn(
                                 "font-bold text-base",

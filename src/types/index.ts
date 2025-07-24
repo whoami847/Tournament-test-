@@ -112,10 +112,10 @@ export interface Order {
   userId: string;
   amount: number;
   tran_id: string;
-  status: 'pending' | 'success' | 'fail' | 'cancelled';
-  gateway: 'rupantorpay';
+  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  gateway: 'RupantorPay';
   createdAt: string;
-  gatewayResponse: any;
+  gatewayResponse?: any;
 }
 
 export interface Transaction {
@@ -125,7 +125,7 @@ export interface Transaction {
   type: 'deposit' | 'withdrawal' | 'prize' | 'fee' | 'admin_adjustment';
   description: string;
   date: Timestamp | string;
-  status?: 'pending' | 'success' | 'failed';
+  status?: 'COMPLETED' | 'PENDING' | 'FAILED';
   gatewayTransactionId?: string;
 }
 
@@ -197,6 +197,15 @@ export interface PaymentGatewaySettings {
   storeId: string;
   storePassword: string;
 }
+
+export interface Gateway {
+  id: string;
+  name: string;
+  storePassword?: string;
+  isLive: boolean;
+  enabled: boolean;
+}
+
 
 export interface WithdrawMethod {
   id: string;
