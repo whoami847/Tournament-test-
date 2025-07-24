@@ -1,13 +1,22 @@
+
 'use client';
 
+import { useEffect } from 'react';
 import { AutomatedWalletTopUpForm } from '@/components/automated-wallet-top-up-form';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useStore } from '@/lib/store';
 
 export default function TopUpPage() {
   const router = useRouter();
+  const { initializeGateways } = useStore();
+
+  useEffect(() => {
+    const unsubscribe = initializeGateways();
+    return () => unsubscribe();
+  }, [initializeGateways]);
 
   return (
     <div className="container mx-auto max-w-2xl py-8">
