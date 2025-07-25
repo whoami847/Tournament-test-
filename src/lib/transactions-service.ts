@@ -9,10 +9,11 @@ export const getTransactionsStream = (
   callback: (transactions: Transaction[]) => void
 ) => {
   const transactionsCollection = collection(firestore, 'transactions');
+  // The query with `where` on 'userId' and `orderBy` on 'date' requires a composite index.
+  // To avoid this, we query only with `where` and sort the results on the client side.
   const q = query(
     transactionsCollection,
-    where('userId', '==', userId),
-    orderBy('date', 'desc') 
+    where('userId', '==', userId)
   );
 
   const unsubscribe = onSnapshot(q, (querySnapshot) => {
@@ -28,26 +29,11 @@ export const getTransactionsStream = (
         } as Transaction);
       }
     });
+    // Sort client-side
+    transactions.sort((a, b) => new Date(b.date as string).getTime() - new Date(a.date as string).getTime());
     callback(transactions);
   }, (error) => {
     console.error("Error fetching transactions:", error);
-    // Fallback for older data or if index is missing
-    const fallbackQuery = query(transactionsCollection, where('userId', '==', userId));
-    return onSnapshot(fallbackQuery, (snapshot) => {
-        const fallbackTransactions: Transaction[] = [];
-        snapshot.forEach((doc) => {
-            const data = doc.data();
-             if (data.date) {
-                fallbackTransactions.push({
-                    id: doc.id,
-                    ...data,
-                    date: toIsoString(data.date),
-                } as Transaction);
-            }
-        });
-        fallbackTransactions.sort((a, b) => new Date(b.date as string).getTime() - new Date(a.date as string).getTime());
-        callback(fallbackTransactions);
-    });
   });
 
   return unsubscribe;
