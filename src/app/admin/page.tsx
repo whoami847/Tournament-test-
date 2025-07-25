@@ -1,14 +1,13 @@
 
 import Link from 'next/link';
 import { Card, CardContent } from "@/components/ui/card";
-import { LayoutDashboard, Users, Swords, List, Settings, LucideIcon, Gamepad2, Image as ImageIcon, ClipboardCheck, Award, Banknote, ListChecks, Landmark } from "lucide-react";
+import { LayoutDashboard, Users, Swords, List, Settings, LucideIcon, Gamepad2, Image as ImageIcon, ClipboardCheck, Award, Banknote, ListChecks } from "lucide-react";
 
 const adminControls: { href: string; icon: LucideIcon; label: string }[] = [
   { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/admin/banners', icon: ImageIcon, label: 'Banners' },
   { href: '/admin/tournaments', icon: Swords, label: 'Tournaments' },
   { href: '/admin/games', icon: Gamepad2, label: 'Games' },
-  { href: '/admin/gateways', icon: Landmark, label: 'Gateways' },
   { href: '/admin/users', icon: Users, label: 'Users' },
   { href: '/admin/results-approval', icon: ClipboardCheck, label: 'Results Approval' },
   { href: '/admin/prize-approvals', icon: Award, label: 'Prize Approvals' },

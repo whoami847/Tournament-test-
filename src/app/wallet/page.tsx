@@ -251,11 +251,6 @@ const CardStack = ({ balance, profile }: { balance: number, profile: PlayerProfi
                 </div>
 
                 <div className="flex justify-start gap-4">
-                     <Button asChild className="bg-white/20 hover:bg-white/30 text-white font-bold text-xs h-8 px-3 backdrop-blur-sm rounded-md">
-                        <Link href="/wallet/top-up">
-                            <ArrowUp className="mr-2 h-4 w-4" /> Add Money
-                        </Link>
-                    </Button>
                     {profile && <WithdrawDialog profile={profile} />}
                 </div>
             </div>

@@ -193,15 +193,6 @@ export interface UserTeam {
   memberGamerIds: string[];
 }
 
-export interface Gateway {
-  id: string;
-  name: string;
-  apiKey: string;
-  isLive: boolean;
-  enabled: boolean;
-}
-
-
 export interface WithdrawMethod {
   id: string;
   image?: string;

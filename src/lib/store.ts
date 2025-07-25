@@ -1,19 +1,13 @@
 
 import { create } from 'zustand';
-import { getGatewaysStream, type Gateway } from './gateways';
 
 interface StoreState {
-  gateways: Gateway[];
+  // This store is currently empty but can be used for future global state.
 }
 
 const useStoreImpl = create<StoreState>((set) => {
-  // Initialize the stream listener when the store is created
-  getGatewaysStream((gateways) => {
-    set({ gateways });
-  });
-
   return {
-    gateways: [],
+    // Initial state here
   };
 });
 
