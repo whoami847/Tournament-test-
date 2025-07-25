@@ -20,7 +20,19 @@ import { useAuth } from '@/hooks/use-auth';
 import { getUserProfileStream } from '@/lib/users-service';
 import Link from 'next/link';
 import { getTeamStream } from '@/lib/teams-service';
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 const playerSchema = z.object({
   name: z.string().min(1, { message: "Player name is required." }),
@@ -213,6 +225,8 @@ export default function JoinTournamentClient() {
 
     const renderPlayerSlot = (index: number) => {
         const isLeaderSlot = index === 0;
+        const [popoverOpen, setPopoverOpen] = useState(false);
+
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
                 <FormField control={form.control} name={`players.${index}.name`} render={({ field }) => (
@@ -223,9 +237,43 @@ export default function JoinTournamentClient() {
                     </FormItem>
                 )} />
                 <FormField control={form.control} name={`players.${index}.id`} render={({ field }) => (
-                    <FormItem>
+                     <FormItem className="flex flex-col">
                         <FormLabel>Gamer ID</FormLabel>
+                        <div className="flex gap-2">
                         <FormControl><Input placeholder="Enter in-game ID" {...field} disabled={isLeaderSlot} /></FormControl>
+                        {!isLeaderSlot && team && team.members.length > 1 && (
+                            <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" type="button">Select Player</Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[200px] p-0">
+                                <Command>
+                                    <CommandInput placeholder="Search player..." />
+                                    <CommandEmpty>No player found.</CommandEmpty>
+                                    <CommandGroup>
+                                    {team.members
+                                        .filter(m => m.uid !== profile?.id)
+                                        .map((member) => (
+                                        <CommandItem
+                                            key={member.gamerId}
+                                            value={member.name}
+                                            onSelect={() => {
+                                                form.setValue(`players.${index}.name`, member.name);
+                                                form.setValue(`players.${index}.id`, member.gamerId);
+                                                form.setValue(`players.${index}.uid`, member.uid);
+                                                form.trigger([`players.${index}.name`, `players.${index}.id`]);
+                                                setPopoverOpen(false);
+                                            }}
+                                        >
+                                            {member.name}
+                                        </CommandItem>
+                                    ))}
+                                    </CommandGroup>
+                                </Command>
+                                </PopoverContent>
+                            </Popover>
+                        )}
+                        </div>
                         <FormMessage />
                     </FormItem>
                 )} />
