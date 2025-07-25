@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Banknote, Gamepad2, Gift, ArrowUp, ArrowDown, Landmark, CreditCard, Wallet, Globe, ChevronDown, ArrowLeft, ArrowRight, ChevronsRight, Loader2 } from 'lucide-react';
+import { Banknote, Gamepad2, Gift, ArrowUp, ArrowDown, Landmark, CreditCard, Wallet, Globe, ChevronDown, ArrowLeft, ArrowRight, ChevronsRight, Loader2, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
@@ -32,6 +32,7 @@ import { createWithdrawalRequest } from '@/lib/withdraw-requests-service';
 import { getActiveWithdrawMethods } from '@/lib/withdraw-methods-service';
 import { format } from 'date-fns';
 import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
 
 
 // --- SUB-COMPONENTS ---
@@ -85,8 +86,9 @@ const WithdrawDialog = ({ profile }: { profile: PlayerProfile }) => {
             setAmount('');
             setAccountNumber('');
             setSelectedMethod(null);
-            setMethods([]);
-            hasFetched.current = false;
+            // Don't reset methods so it's cached for the session
+            // setMethods([]);
+            // hasFetched.current = false;
         }
     };
 
@@ -269,6 +271,12 @@ const TransactionList = ({ transactions }: { transactions: Transaction[] }) => {
         fee: <div className="p-3 bg-gray-500/10 rounded-full"><Gamepad2 className="h-5 w-5 text-gray-400" /></div>,
         admin_adjustment: <div className="p-3 bg-blue-500/10 rounded-full"><Landmark className="h-5 w-5 text-blue-400" /></div>,
     };
+    
+    const statusConfig = {
+        COMPLETED: { text: "Completed", icon: <CheckCircle className="h-3 w-3" />, className: "bg-green-500/20 text-green-500" },
+        PENDING: { text: "Pending", icon: <Clock className="h-3 w-3" />, className: "bg-amber-500/20 text-amber-500" },
+        FAILED: { text: "Failed", icon: <XCircle className="h-3 w-3" />, className: "bg-red-500/20 text-red-500" },
+    };
 
     return (
         <section>
@@ -277,23 +285,33 @@ const TransactionList = ({ transactions }: { transactions: Transaction[] }) => {
             </div>
             <div className="space-y-3">
                 {transactions.length > 0 ? (
-                    transactions.map((tx) => (
-                    <Card key={tx.id} className="bg-card/80 backdrop-blur-sm border-border/50">
-                        <CardContent className="p-3 flex items-center gap-4">
-                            {transactionIcons[tx.type] || transactionIcons['fee']}
-                            <div className="flex-grow">
-                                <p className="font-semibold">{tx.description}</p>
-                                <p className="text-sm text-muted-foreground">{format(new Date(tx.date as string), "PPP, p")}</p>
-                            </div>
-                            <p className={cn(
-                                "font-bold text-base",
-                                tx.amount > 0 ? "text-green-400" : "text-foreground"
-                            )}>
-                                {tx.amount > 0 ? `+` : ``}{tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TK
-                            </p>
-                        </CardContent>
-                    </Card>
-                    ))
+                    transactions.map((tx) => {
+                        const status = tx.status || 'COMPLETED';
+                        const config = statusConfig[status];
+                        return (
+                            <Card key={tx.id} className="bg-card/80 backdrop-blur-sm border-border/50">
+                                <CardContent className="p-3 flex items-center gap-4">
+                                    {transactionIcons[tx.type] || transactionIcons['fee']}
+                                    <div className="flex-grow">
+                                        <p className="font-semibold">{tx.description}</p>
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-sm text-muted-foreground">{format(new Date(tx.date as string), "PPP, p")}</p>
+                                            <Badge className={cn("text-xs capitalize h-5 px-1.5 gap-1", config.className)}>
+                                                {config.icon}
+                                                {config.text}
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                    <p className={cn(
+                                        "font-bold text-base",
+                                        tx.amount > 0 ? "text-green-400" : "text-foreground"
+                                    )}>
+                                        {tx.amount > 0 ? `+` : ``}{tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TK
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        )
+                    })
                 ) : (
                     <Card className="bg-card/80 backdrop-blur-sm border-border/50">
                         <CardContent className="p-6 text-center text-muted-foreground">
