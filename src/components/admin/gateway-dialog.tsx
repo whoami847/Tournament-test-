@@ -35,7 +35,7 @@ export function GatewayDialog({ gateway, children }: GatewayDialogProps) {
   } = useForm<Omit<Gateway, 'id'>>({
     defaultValues: {
       name: 'RupantorPay',
-      storePassword: '',
+      apiKey: '',
       isLive: false,
       enabled: true,
     },
@@ -47,7 +47,7 @@ export function GatewayDialog({ gateway, children }: GatewayDialogProps) {
     } else {
       reset({
         name: 'RupantorPay',
-        storePassword: '',
+        apiKey: '',
         isLive: false,
         enabled: true,
       });
@@ -87,15 +87,15 @@ export function GatewayDialog({ gateway, children }: GatewayDialogProps) {
             <Input id="name" {...register('name')} readOnly className="mt-1" />
           </div>
           <div>
-            <Label htmlFor="storePassword">Store Password</Label>
+            <Label htmlFor="apiKey">API Key</Label>
             <Input
-              id="storePassword"
+              id="apiKey"
               type="password"
-              {...register('storePassword', { required: 'Store Password is required.' })}
+              {...register('apiKey', { required: 'API Key is required.' })}
               className="mt-1"
             />
-            {errors.storePassword && (
-              <p className="text-sm text-destructive mt-1">{errors.storePassword.message}</p>
+            {errors.apiKey && (
+              <p className="text-sm text-destructive mt-1">{errors.apiKey.message}</p>
             )}
           </div>
           <div className="flex items-center justify-between">

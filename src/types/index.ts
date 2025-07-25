@@ -191,16 +191,10 @@ export interface UserTeam {
   memberGamerIds: string[];
 }
 
-export interface PaymentGatewaySettings {
-  id: string;
-  name: string;
-  storePassword: string;
-}
-
 export interface Gateway {
   id: string;
   name: string;
-  storePassword?: string;
+  apiKey: string;
   isLive: boolean;
   enabled: boolean;
 }

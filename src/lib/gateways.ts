@@ -16,14 +16,14 @@ import { firestore } from './firebase';
 export interface Gateway {
   id: string;
   name: string;
-  storePassword?: string;
+  apiKey: string;
   isLive: boolean;
   enabled: boolean;
 }
 
 const gatewaysCollection = collection(firestore, 'gateways');
 
-export const getGateways = (callback: (gateways: Gateway[]) => void) => {
+export const getGatewaysStream = (callback: (gateways: Gateway[]) => void) => {
   return onSnapshot(gatewaysCollection, (snapshot) => {
     const gateways = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Gateway));
     callback(gateways);
@@ -39,10 +39,7 @@ export const getEnabledGateway = async (): Promise<Gateway | null> => {
   const docData = snapshot.docs[0].data();
   return { 
     id: snapshot.docs[0].id, 
-    name: docData.name,
-    storePassword: docData.storePassword,
-    isLive: docData.isLive,
-    enabled: docData.enabled,
+    ...docData
   } as Gateway;
 };
 

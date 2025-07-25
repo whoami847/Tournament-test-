@@ -8,57 +8,63 @@ const RUPANTORPAY_VERIFY_URL = 'https://payment.rupantorpay.com/api/payment/veri
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const tran_id = searchParams.get('tran_id');
+  const transactionId = searchParams.get('transactionId');
   const status = searchParams.get('status');
 
-  if (!tran_id) {
+  if (!transactionId) {
+    console.error("Callback Error: transactionId missing from URL.");
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/payment/fail`);
   }
 
-  const orderRef = doc(firestore, 'orders', tran_id);
+  const orderRef = doc(firestore, 'orders', transactionId);
+  
+  // Handle immediate fail or cancel from RupantorPay redirect
+  if (status && (status.toLowerCase() === 'failed' || status.toLowerCase() === 'cancelled')) {
+      await updateDoc(orderRef, { status: status.toUpperCase() }).catch(err => console.error("Failed to update order status on fail/cancel:", err));
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/payment/${status.toLowerCase() === 'failed' ? 'fail' : 'cancel'}`);
+  }
+
   const orderDoc = await getDoc(orderRef);
 
-  if (!orderDoc.exists() || orderDoc.data().status !== 'PENDING') {
-    // If order is already processed, redirect based on its final status
-    if (orderDoc.exists()) {
-        const finalStatus = orderDoc.data().status.toLowerCase();
-        if (finalStatus === 'completed') return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/payment/success`);
-        if (['failed', 'cancelled'].includes(finalStatus)) return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/payment/${finalStatus === 'failed' ? 'fail' : 'cancel'}`);
-    }
+  if (!orderDoc.exists()) {
+    console.error(`Callback Error: Order with transaction_id ${transactionId} not found.`);
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/payment/fail`);
   }
-
-  if (status === 'fail' || status === 'cancel') {
-    await updateDoc(orderRef, { status: status.toUpperCase() });
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/payment/${status}`);
+  
+  if (orderDoc.data().status !== 'PENDING') {
+      const finalStatus = orderDoc.data().status.toLowerCase();
+      if (finalStatus === 'completed') return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/payment/success`);
+      if (['failed', 'cancelled'].includes(finalStatus)) return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/payment/${finalStatus}`);
+      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/payment/fail`);
   }
 
   // Verify payment with RupantorPay
   const gateway = await getEnabledGateway();
-  if (!gateway || !gateway.storePassword) {
+  if (!gateway || !gateway.apiKey) {
     await updateDoc(orderRef, { status: 'FAILED', gatewayResponse: 'Gateway not configured on server.' });
     return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/payment/fail`);
   }
 
   const verifyPayload = {
-    store_passwd: gateway.storePassword,
-    tran_id,
+    transaction_id: transactionId,
   };
 
   try {
     const verifyResponse = await fetch(RUPANTORPAY_VERIFY_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'X-API-KEY': gateway.apiKey,
+      },
       body: JSON.stringify(verifyPayload),
     });
 
     const verifyData = await verifyResponse.json();
 
-    if (verifyData.status === 'success' && verifyData.data.status === 'success') {
+    if (verifyData.status && verifyData.status === 'COMPLETED') {
       await runTransaction(firestore, async (transaction) => {
         const freshOrderDoc = await transaction.get(orderRef);
         if (!freshOrderDoc.exists() || freshOrderDoc.data().status !== 'PENDING') {
-            // This transaction has already been processed in another request.
             return; 
         }
 
@@ -81,7 +87,7 @@ export async function GET(req: NextRequest) {
             description: `Deposit via ${gateway.name}`,
             date: serverTimestamp(),
             status: 'COMPLETED',
-            gatewayTransactionId: tran_id,
+            gatewayTransactionId: transactionId,
         });
 
       });

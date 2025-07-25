@@ -13,7 +13,7 @@ import { Loader2 } from 'lucide-react';
 export function AutomatedWalletTopUpForm() {
   const [amount, setAmount] = useState('');
   const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { gateways } = useStore();
   const { toast } = useToast();
 
@@ -21,7 +21,7 @@ export function AutomatedWalletTopUpForm() {
 
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user || !enabledGateway) return;
+    if (!user || !profile || !enabledGateway) return;
 
     setLoading(true);
 
@@ -29,12 +29,17 @@ export function AutomatedWalletTopUpForm() {
       const response = await fetch('/api/payment/initiate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: parseFloat(amount), userId: user.uid }),
+        body: JSON.stringify({ 
+          amount: parseFloat(amount), 
+          userId: user.uid,
+          name: profile.name,
+          email: profile.email,
+        }),
       });
 
       const data = await response.json();
 
-      if (response.ok) {
+      if (response.ok && data.payment_url) {
         window.location.href = data.payment_url;
       } else {
         toast({
@@ -61,7 +66,7 @@ export function AutomatedWalletTopUpForm() {
   return (
     <form onSubmit={handlePayment} className="space-y-4">
       <div>
-        <Label htmlFor="amount">Amount</Label>
+        <Label htmlFor="amount">Amount (BDT)</Label>
         <Input
           id="amount"
           type="number"

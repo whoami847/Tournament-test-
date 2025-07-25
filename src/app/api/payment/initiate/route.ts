@@ -3,12 +3,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
 import { getEnabledGateway } from '@/lib/gateways';
+import { headers } from 'next/headers';
 
 const RUPANTORPAY_CHECKOUT_URL = 'https://payment.rupantorpay.com/api/payment/checkout';
 
 export async function POST(req: NextRequest) {
   try {
-    const { amount, userId } = await req.json();
+    const { amount, userId, name, email } = await req.json();
+    const headerList = headers();
+    const clientHost = headerList.get('host') || 'unknown';
 
     if (!userId || !amount || amount < 10) {
       return NextResponse.json(
@@ -16,61 +19,64 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
-    const userDocRef = doc(firestore, 'users', userId);
-    const userDoc = await getDoc(userDocRef);
-    if (!userDoc.exists()) {
-      return NextResponse.json({ message: 'User not found' }, { status: 404 });
+    
+    if (!name || !email) {
+      return NextResponse.json(
+        { message: 'Customer name and email are required' },
+        { status: 400 }
+      );
     }
 
     const gateway = await getEnabledGateway();
-    if (!gateway || !gateway.storePassword) {
+    if (!gateway || !gateway.apiKey) {
       return NextResponse.json(
         { message: 'Payment gateway is not configured or enabled. Please contact support.' },
         { status: 500 }
       );
     }
 
-    const tran_id = `${userId.substring(0, 5)}-${Date.now()}`;
+    const transaction_id = `${userId.substring(0, 5)}-${Date.now()}`;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
     const payload = {
-      store_passwd: gateway.storePassword,
-      total_amount: amount,
-      currency: 'BDT',
-      tran_id,
-      success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/payment/callback?tran_id=${tran_id}&status=success`,
-      fail_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/payment/callback?tran_id=${tran_id}&status=fail`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/api/payment/callback?tran_id=${tran_id}&status=cancel`,
-      cus_name: userDoc.data().name || 'N/A',
-      cus_email: userDoc.data().email || 'no-email@example.com',
-      cus_phone: 'N/A',
+        fullname: name,
+        email: email,
+        amount: amount.toString(),
+        success_url: `${siteUrl}/payment/success`,
+        cancel_url: `${siteUrl}/payment/cancel`,
+        fail_url: `${siteUrl}/payment/fail`,
+        webhook_url: `${siteUrl}/api/payment/callback`, // This is the IPN URL
     };
 
     const response = await fetch(RUPANTORPAY_CHECKOUT_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'X-API-KEY': gateway.apiKey,
+        'X-CLIENT': clientHost,
+       },
       body: JSON.stringify(payload),
     });
 
     const data = await response.json();
 
-    if (data.status !== 'success' || !data.data) {
+    if (data.status !== 1 || !data.payment_url) {
       return NextResponse.json(
         { message: data.message || 'Failed to initiate payment with RupantorPay' },
         { status: 500 }
       );
     }
 
-    await setDoc(doc(firestore, 'orders', tran_id), {
+    await setDoc(doc(firestore, 'orders', transaction_id), {
       userId,
       amount,
-      tran_id,
+      tran_id: transaction_id,
       status: 'PENDING',
       gateway: gateway.name,
       createdAt: new Date().toISOString(),
     });
 
-    return NextResponse.json({ payment_url: data.data });
+    return NextResponse.json({ payment_url: data.payment_url });
   } catch (error) {
     console.error('Payment initiation error:', error);
     return NextResponse.json({ message: 'An internal server error occurred' }, { status: 500 });

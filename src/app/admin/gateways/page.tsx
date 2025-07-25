@@ -60,7 +60,7 @@ export default function GatewaysPage() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {gateways.map((gateway: Gateway) => (
+          {gateways.length > 0 ? gateways.map((gateway: Gateway) => (
             <div key={gateway.id} className="flex items-center justify-between rounded-lg border p-4">
               <div>
                 <h3 className="font-semibold">{gateway.name}</h3>
@@ -95,7 +95,12 @@ export default function GatewaysPage() {
                 </DropdownMenu>
               </div>
             </div>
-          ))}
+          )) : (
+            <div className="text-center py-10 border border-dashed rounded-lg">
+                <h3 className="text-xl font-semibold">No Gateways Found</h3>
+                <p className="text-muted-foreground mt-2">Click "New Gateway" to add a payment provider.</p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
