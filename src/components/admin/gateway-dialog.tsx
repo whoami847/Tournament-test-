@@ -31,7 +31,9 @@ export function GatewayDialog({ gateway, children }: GatewayDialogProps) {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    watch,
+    setValue,
+    formState: { errors, isSubmitting },
   } = useForm<Omit<Gateway, 'id'>>({
     defaultValues: {
       name: 'RupantorPay',
@@ -41,6 +43,9 @@ export function GatewayDialog({ gateway, children }: GatewayDialogProps) {
     },
   });
   
+  const isLive = watch('isLive');
+  const enabled = watch('enabled');
+
   useEffect(() => {
     if (gateway) {
       reset(gateway);
@@ -100,26 +105,26 @@ export function GatewayDialog({ gateway, children }: GatewayDialogProps) {
           </div>
           <div className="flex items-center justify-between">
             <Label htmlFor="isLive">Live Mode</Label>
-            <Controller
-              name="isLive"
-              control={control}
-              render={({ field }) => (
-                <Switch id="isLive" checked={field.value} onCheckedChange={field.onChange} />
-              )}
+            <Switch
+                id="isLive"
+                checked={isLive}
+                onCheckedChange={(checked) => setValue('isLive', checked)}
+                {...register('isLive')}
             />
           </div>
           <div className="flex items-center justify-between">
             <Label htmlFor="enabled">Enabled</Label>
-            <Controller
-              name="enabled"
-              control={control}
-              render={({ field }) => (
-                <Switch id="enabled" checked={field.value} onCheckedChange={field.onChange} />
-              )}
+            <Switch
+                id="enabled"
+                checked={enabled}
+                onCheckedChange={(checked) => setValue('enabled', checked)}
+                {...register('enabled')}
             />
           </div>
           <DialogFooter>
-            <Button type="submit">Save</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Saving...' : 'Save'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
