@@ -9,25 +9,45 @@ export const getTransactionsStream = (
   callback: (transactions: Transaction[]) => void
 ) => {
   const transactionsCollection = collection(firestore, 'transactions');
-  // Removed orderBy to avoid needing a composite index. Sorting is now done client-side.
   const q = query(
     transactionsCollection,
-    where('userId', '==', userId)
+    where('userId', '==', userId),
+    orderBy('date', 'desc') 
   );
 
   const unsubscribe = onSnapshot(q, (querySnapshot) => {
     const transactions: Transaction[] = [];
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      transactions.push({
-        id: doc.id,
-        ...data,
-        date: toIsoString(data.date),
-      } as Transaction);
+      // Ensure date exists before processing
+      if (data.date) {
+        transactions.push({
+          id: doc.id,
+          ...data,
+          date: toIsoString(data.date),
+        } as Transaction);
+      }
     });
-    // Sort transactions by date on the client side
-    transactions.sort((a, b) => new Date(b.date as string).getTime() - new Date(a.date as string).getTime());
     callback(transactions);
+  }, (error) => {
+    console.error("Error fetching transactions:", error);
+    // Fallback for older data or if index is missing
+    const fallbackQuery = query(transactionsCollection, where('userId', '==', userId));
+    return onSnapshot(fallbackQuery, (snapshot) => {
+        const fallbackTransactions: Transaction[] = [];
+        snapshot.forEach((doc) => {
+            const data = doc.data();
+             if (data.date) {
+                fallbackTransactions.push({
+                    id: doc.id,
+                    ...data,
+                    date: toIsoString(data.date),
+                } as Transaction);
+            }
+        });
+        fallbackTransactions.sort((a, b) => new Date(b.date as string).getTime() - new Date(a.date as string).getTime());
+        callback(fallbackTransactions);
+    });
   });
 
   return unsubscribe;
