@@ -255,11 +255,12 @@ export default function JoinTournamentClient() {
                                             key={member.gamerId}
                                             value={member.name}
                                             onSelect={() => {
-                                                form.setValue(`players.${index}.name`, member.name);
-                                                form.setValue(`players.${index}.id`, member.gamerId);
+                                                form.setValue(`players.${index}.name`, member.name, { shouldValidate: true, shouldDirty: true });
+                                                form.setValue(`players.${index}.id`, member.gamerId, { shouldValidate: true, shouldDirty: true });
                                                 if (member.uid) {
-                                                    form.setValue(`players.${index}.uid`, member.uid);
+                                                    form.setValue(`players.${index}.uid`, member.uid, { shouldValidate: true, shouldDirty: true });
                                                 }
+                                                form.trigger(`players.${index}`);
                                                 // Close popover
                                                 document.body.click(); 
                                             }}
