@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Banknote, Gamepad2, Gift, ArrowUp, ArrowDown, Landmark, CreditCard, Wallet, Globe, ChevronDown, ArrowLeft, ArrowRight, ChevronsRight, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -60,16 +60,35 @@ const WithdrawDialog = ({ profile }: { profile: PlayerProfile }) => {
     const [methods, setMethods] = useState<WithdrawMethod[]>([]);
     const [loadingMethods, setLoadingMethods] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const hasFetched = useRef(false);
 
-    useEffect(() => {
-        if (isOpen) {
-            setLoadingMethods(true);
-            getActiveWithdrawMethods().then(data => {
-                setMethods(data);
-                setLoadingMethods(false);
-            });
+    const fetchMethods = useCallback(async () => {
+        setLoadingMethods(true);
+        hasFetched.current = true;
+        try {
+            const data = await getActiveWithdrawMethods();
+            setMethods(data);
+        } catch (error) {
+            toast({ title: "Error", description: "Could not fetch withdrawal methods.", variant: "destructive" });
+        } finally {
+            setLoadingMethods(false);
         }
-    }, [isOpen]);
+    }, [toast]);
+
+    const handleOpenChange = (open: boolean) => {
+        setIsOpen(open);
+        if (open && !hasFetched.current) {
+            fetchMethods();
+        }
+        if (!open) {
+            // Reset state on close
+            setAmount('');
+            setAccountNumber('');
+            setSelectedMethod(null);
+            setMethods([]);
+            hasFetched.current = false;
+        }
+    };
 
     const handleWithdraw = async () => {
         if (!selectedMethod || !amount || !accountNumber) {
@@ -92,10 +111,7 @@ const WithdrawDialog = ({ profile }: { profile: PlayerProfile }) => {
         const result = await createWithdrawalRequest(profile, withdrawAmount, selectedMethod.name, accountNumber);
         if (result.success) {
             toast({ title: "Withdrawal Request Submitted", description: "Your request is now pending admin approval." });
-            setIsOpen(false);
-            setAmount('');
-            setAccountNumber('');
-            setSelectedMethod(null);
+            handleOpenChange(false);
         } else {
             toast({ title: "Error", description: result.error || "Failed to submit request.", variant: "destructive" });
         }
@@ -106,7 +122,7 @@ const WithdrawDialog = ({ profile }: { profile: PlayerProfile }) => {
     const receivableAmount = parseFloat(amount || '0') - fee;
 
     return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
                 <Button className="bg-white/20 hover:bg-white/30 text-white font-bold text-xs h-8 px-3 backdrop-blur-sm rounded-md">
                     <ArrowDown className="mr-2 h-4 w-4" /> Withdraw
@@ -118,7 +134,7 @@ const WithdrawDialog = ({ profile }: { profile: PlayerProfile }) => {
                     <DialogDescription>Select a method and enter the amount you wish to withdraw.</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
-                    {loadingMethods ? <Loader2 className="mx-auto h-6 w-6 animate-spin" /> : (
+                    {loadingMethods ? <Loader2 className="mx-auto h-6 w-6 animate-spin" /> : methods.length > 0 ? (
                         <RadioGroup onValueChange={(value) => setSelectedMethod(methods.find(m => m.id === value) || null)}>
                             {methods.map(method => (
                                 <Label key={method.id} htmlFor={method.id} className="flex items-center gap-3 rounded-md border p-3 has-[:checked]:border-primary">
@@ -131,6 +147,8 @@ const WithdrawDialog = ({ profile }: { profile: PlayerProfile }) => {
                                 </Label>
                             ))}
                         </RadioGroup>
+                    ) : (
+                        <p className="text-center text-muted-foreground">No active withdrawal methods available.</p>
                     )}
                     
                     {selectedMethod && (
