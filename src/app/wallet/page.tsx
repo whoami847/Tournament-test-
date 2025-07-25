@@ -286,7 +286,7 @@ const TransactionList = ({ transactions }: { transactions: Transaction[] }) => {
             <div className="space-y-3">
                 {transactions.length > 0 ? (
                     transactions.map((tx) => {
-                        const status = tx.status || 'COMPLETED';
+                        const status = (tx.status || 'COMPLETED').toUpperCase() as keyof typeof statusConfig;
                         const config = statusConfig[status];
                         return (
                             <Card key={tx.id} className="bg-card/80 backdrop-blur-sm border-border/50">
@@ -296,10 +296,12 @@ const TransactionList = ({ transactions }: { transactions: Transaction[] }) => {
                                         <p className="font-semibold">{tx.description}</p>
                                         <div className="flex items-center gap-2">
                                             <p className="text-sm text-muted-foreground">{format(new Date(tx.date as string), "PPP, p")}</p>
-                                            <Badge className={cn("text-xs capitalize h-5 px-1.5 gap-1", config.className)}>
-                                                {config.icon}
-                                                {config.text}
-                                            </Badge>
+                                            {config && (
+                                                <Badge className={cn("text-xs capitalize h-5 px-1.5 gap-1", config.className)}>
+                                                    {config.icon}
+                                                    {config.text}
+                                                </Badge>
+                                            )}
                                         </div>
                                     </div>
                                     <p className={cn(
