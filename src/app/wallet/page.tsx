@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Banknote, Gamepad2, Gift, ArrowUp, ArrowDown, Landmark, CreditCard, Wallet, Globe, ChevronDown, ArrowLeft, ArrowRight, ChevronsRight, Loader2, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Banknote, Gamepad2, Gift, ArrowUp, ArrowDown, Landmark, CreditCard, Wallet, Globe, ChevronDown, ArrowLeft, ArrowRight, ChevronsRight, Loader2, Clock, CheckCircle, XCircle, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
@@ -53,6 +53,28 @@ const WalletHeader = ({ profile }: { profile: PlayerProfile | null }) => (
         </div>
     </header>
 );
+
+const CopyToClipboard = ({ text, label }: { text: string; label: string }) => {
+    const { toast } = useToast();
+    const handleCopy = () => {
+      navigator.clipboard.writeText(text);
+      toast({
+        title: `${label} Copied!`,
+        description: text,
+      });
+    };
+    return (
+      <div className='space-y-1'>
+        <Label>{label}</Label>
+        <div className="flex items-center gap-2">
+          <Input readOnly value={text} className="bg-muted/50" />
+          <Button variant="ghost" size="icon" onClick={handleCopy}>
+            <Copy className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
+};
 
 const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
     const { toast } = useToast();
@@ -159,10 +181,7 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
                             <AlertTitle>{selectedMethod.name} Instructions</AlertTitle>
                             <AlertDescription className="space-y-2">
                                 {selectedMethod.accountNumber && (
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-muted-foreground">Account Number:</span>
-                                        <span className="font-bold text-lg text-primary">{selectedMethod.accountNumber}</span>
-                                    </div>
+                                    <CopyToClipboard text={selectedMethod.accountNumber} label="Account Number" />
                                 )}
                                 <p className="whitespace-pre-wrap pt-2 border-t">{selectedMethod.instructions}</p>
                             </AlertDescription>
