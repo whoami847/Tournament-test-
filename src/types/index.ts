@@ -110,6 +110,8 @@ export interface PlayerProfile {
 export interface Order {
   id: string;
   userId: string;
+  customerName: string;
+  customerEmail: string;
   amount: number;
   tran_id: string;
   status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
@@ -204,7 +206,6 @@ export interface WithdrawMethod {
   id: string;
   image?: string;
   name: string;
-  receiverInfo: string;
   feePercentage: number;
   minAmount: number;
   maxAmount: number;

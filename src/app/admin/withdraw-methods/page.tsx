@@ -129,7 +129,6 @@ export default function AdminWithdrawMethodsPage() {
                                     <TableRow>
                                         <TableHead>Icon</TableHead>
                                         <TableHead>Name</TableHead>
-                                        <TableHead>Receiver Info</TableHead>
                                         <TableHead>Fee</TableHead>
                                         <TableHead>Limits (Min/Max)</TableHead>
                                         <TableHead>Status</TableHead>
@@ -147,7 +146,6 @@ export default function AdminWithdrawMethodsPage() {
                                                 )}
                                             </TableCell>
                                             <TableCell className="font-medium">{method.name}</TableCell>
-                                            <TableCell>{method.receiverInfo}</TableCell>
                                             <TableCell>{method.feePercentage}%</TableCell>
                                             <TableCell>{method.minAmount} / {method.maxAmount}</TableCell>
                                             <TableCell>
@@ -187,7 +185,6 @@ export default function AdminWithdrawMethodsPage() {
                                             )}
                                             <div>
                                                 <p className="font-semibold">{method.name}</p>
-                                                <p className="text-sm text-muted-foreground">{method.receiverInfo}</p>
                                             </div>
                                         </div>
                                         <Badge variant={method.status === 'active' ? 'default' : 'secondary'} className={`${method.status === 'active' ? 'bg-green-500' : ''} flex-shrink-0`}>

@@ -14,7 +14,6 @@ import { ImageUpload } from './image-upload';
 const formSchema = z.object({
   name: z.string().min(2, "Method name is required."),
   image: z.string().url("Please upload an icon for the method."),
-  receiverInfo: z.string().min(5, "Receiver info is required."),
   feePercentage: z.coerce.number().min(0).max(100),
   minAmount: z.coerce.number().min(0),
   maxAmount: z.coerce.number().min(1),
@@ -38,7 +37,6 @@ export function WithdrawMethodForm({ method, onSubmit, isSubmitting }: WithdrawM
         defaultValues: {
             name: method?.name || '',
             image: method?.image || '',
-            receiverInfo: method?.receiverInfo || '',
             feePercentage: method?.feePercentage || 0,
             minAmount: method?.minAmount || 50,
             maxAmount: method?.maxAmount || 5000,
@@ -67,9 +65,6 @@ export function WithdrawMethodForm({ method, onSubmit, isSubmitting }: WithdrawM
                 />
                 <FormField control={form.control} name="name" render={({ field }) => (
                     <FormItem><FormLabel>Method Name</FormLabel><FormControl><Input placeholder="e.g., bKash" {...field} /></FormControl><FormMessage /></FormItem>
-                )} />
-                <FormField control={form.control} name="receiverInfo" render={({ field }) => (
-                    <FormItem><FormLabel>Receiver Info</FormLabel><FormControl><Input placeholder="e.g., Personal: 01234567890" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <div className="grid grid-cols-2 gap-4">
                   <FormField control={form.control} name="feePercentage" render={({ field }) => (
