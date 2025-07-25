@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { firestore } from '@/lib/firebase';
 import { getEnabledGateway } from '@/lib/gateways';
 import { headers } from 'next/headers';
@@ -35,8 +35,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const transaction_id = `${userId.substring(0, 5)}-${Date.now()}`;
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || `https://${clientHost}`;
 
     const payload = {
         fullname: name,
@@ -44,7 +43,6 @@ export async function POST(req: NextRequest) {
         amount: amount.toString(),
         success_url: `${siteUrl}/payment/success`,
         cancel_url: `${siteUrl}/payment/cancel`,
-        fail_url: `${siteUrl}/payment/fail`,
         webhook_url: `${siteUrl}/api/payment/callback`, // This is the IPN URL
     };
 
@@ -61,19 +59,25 @@ export async function POST(req: NextRequest) {
     const data = await response.json();
 
     if (data.status !== 1 || !data.payment_url) {
+      console.error("RupantorPay Error:", data);
       return NextResponse.json(
         { message: data.message || 'Failed to initiate payment with RupantorPay' },
         { status: 500 }
       );
     }
 
+    // Use transaction_id from RupantorPay response if available, otherwise generate one
+    const transaction_id = data.transaction_id || `${userId.substring(0, 5)}-${Date.now()}`;
+
     await setDoc(doc(firestore, 'orders', transaction_id), {
       userId,
       amount,
+      customerName: name,
+      customerEmail: email,
       tran_id: transaction_id,
       status: 'PENDING',
       gateway: gateway.name,
-      createdAt: new Date().toISOString(),
+      createdAt: serverTimestamp(),
     });
 
     return NextResponse.json({ payment_url: data.payment_url });
