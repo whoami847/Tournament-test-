@@ -214,78 +214,14 @@ export default function JoinTournamentClient() {
 
     const renderPlayerSlot = (index: number) => {
         const isLeaderSlot = index === 0;
-        const canSelectPlayer = !isLeaderSlot && team && team.leaderId === profile?.id;
-        const playerValue = form.watch(`players.${index}`);
 
-        if (isLeaderSlot) {
-            return (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-                    <FormField control={form.control} name={`players.${index}.name`} render={({ field }) => (
-                        <FormItem><FormLabel>Gamer Name</FormLabel><FormControl><Input {...field} disabled /></FormControl><FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name={`players.${index}.id`} render={({ field }) => (
-                        <FormItem><FormLabel>Gamer ID</FormLabel><FormControl><Input {...field} disabled /></FormControl><FormMessage /></FormItem>
-                    )} />
-                </div>
-            )
-        }
-
-        if (canSelectPlayer) {
-            return (
-                <div className="pt-4 flex items-end gap-2">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-grow">
-                        <FormField control={form.control} name={`players.${index}.name`} render={({ field }) => (
-                            <FormItem><FormLabel>Gamer Name</FormLabel><FormControl><Input {...field} readOnly placeholder="Select a player" /></FormControl><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={form.control} name={`players.${index}.id`} render={({ field }) => (
-                            <FormItem><FormLabel>Gamer ID</FormLabel><FormControl><Input {...field} readOnly placeholder="Select a player" /></FormControl><FormMessage /></FormItem>
-                        )} />
-                    </div>
-                     <Popover>
-                        <PopoverTrigger asChild>
-                           <Button variant="outline">{playerValue?.name ? 'Change' : 'Select'} Player</Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[250px] p-0">
-                           <Command>
-                                <CommandInput placeholder="Search members..." />
-                                <CommandEmpty>No members available.</CommandEmpty>
-                                <CommandGroup>
-                                    {availableTeamMembers.map(member => (
-                                        <CommandItem
-                                            key={member.gamerId}
-                                            value={member.name}
-                                            onSelect={() => {
-                                                form.setValue(`players.${index}.name`, member.name, { shouldValidate: true, shouldDirty: true });
-                                                form.setValue(`players.${index}.id`, member.gamerId, { shouldValidate: true, shouldDirty: true });
-                                                if (member.uid) {
-                                                    form.setValue(`players.${index}.uid`, member.uid, { shouldValidate: true, shouldDirty: true });
-                                                }
-                                                form.trigger(`players.${index}`);
-                                                // Close popover
-                                                document.body.click(); 
-                                            }}
-                                            className="flex items-center gap-2"
-                                        >
-                                            <Avatar className="h-6 w-6"><AvatarImage src={member.avatar} /><AvatarFallback>{member.name.charAt(0)}</AvatarFallback></Avatar>
-                                            <span>{member.name}</span>
-                                        </CommandItem>
-                                    ))}
-                                </CommandGroup>
-                           </Command>
-                        </PopoverContent>
-                    </Popover>
-                </div>
-            )
-        }
-
-        // Default inputs for non-team leaders or solo players
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
                 <FormField control={form.control} name={`players.${index}.name`} render={({ field }) => (
-                    <FormItem><FormLabel>Gamer Name</FormLabel><FormControl><Input placeholder="Enter in-game name" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Gamer Name</FormLabel><FormControl><Input placeholder="Enter in-game name" {...field} disabled={isLeaderSlot} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={form.control} name={`players.${index}.id`} render={({ field }) => (
-                    <FormItem><FormLabel>Gamer ID</FormLabel><FormControl><Input placeholder="Enter in-game ID" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>Gamer ID</FormLabel><FormControl><Input placeholder="Enter in-game ID" {...field} disabled={isLeaderSlot} /></FormControl><FormMessage /></FormItem>
                 )} />
             </div>
         )
