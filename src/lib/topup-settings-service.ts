@@ -27,9 +27,12 @@ export const getTopupMethodsStream = (callback: (methods: TopupMethod[]) => void
 };
 
 export const getActiveTopupMethods = async (): Promise<TopupMethod[]> => {
-    const q = query(methodsCollection, where('status', '==', 'active'), orderBy('name'));
+    const q = query(methodsCollection, where('status', '==', 'active'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TopupMethod));
+    const methods = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TopupMethod));
+    // Sort client-side to avoid composite index requirement
+    methods.sort((a, b) => a.name.localeCompare(b.name));
+    return methods;
 }
 
 export const updateTopupMethod = async (id: string, data: Partial<Omit<TopupMethod, 'id'>>) => {
