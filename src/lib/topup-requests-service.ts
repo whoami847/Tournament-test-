@@ -1,4 +1,6 @@
 
+'use client';
+
 import type { TopupRequest } from '@/types';
 import { firestore } from './firebase';
 import { collection, addDoc, doc, updateDoc, onSnapshot, query, where, orderBy, serverTimestamp, runTransaction } from 'firebase/firestore';
@@ -44,44 +46,51 @@ export const createTopupRequest = async (requestData: Omit<TopupRequest, 'id' | 
 
 export const processTopupRequest = async (requestId: string, newStatus: 'approved' | 'rejected') => {
     const requestDocRef = doc(requestsCollection, requestId);
+
     try {
+        let requestData: TopupRequest | null = null;
+        
         await runTransaction(firestore, async (transaction) => {
             const requestDoc = await transaction.get(requestDocRef);
             if (!requestDoc.exists() || requestDoc.data().status !== 'pending') {
                 throw new Error("Request not found or already processed.");
             }
+            
+            requestData = requestDoc.data() as TopupRequest;
+            const userDocRef = doc(usersCollection, requestData.userId);
+            const userDoc = await transaction.get(userDocRef);
 
-            const requestData = requestDoc.data() as TopupRequest;
+            // All reads are now done. Start writes.
             transaction.update(requestDocRef, { status: newStatus });
 
             if (newStatus === 'approved') {
-                const userDocRef = doc(usersCollection, requestData.userId);
-                const userDoc = await transaction.get(userDocRef);
                 if (!userDoc.exists()) throw new Error("User not found.");
 
-                const newBalance = (userDoc.data().balance || 0) + requestData.amount;
+                const newBalance = (userDoc.data().balance || 0) + requestData!.amount;
                 transaction.update(userDocRef, { balance: newBalance });
 
-                // Create a transaction log
-                const newTransactionRef = doc(transactionsCollection);
+                const newTransactionRef = doc(collection(firestore, 'transactions'));
                 transaction.set(newTransactionRef, {
-                    userId: requestData.userId,
-                    amount: requestData.amount,
+                    userId: requestData!.userId,
+                    amount: requestData!.amount,
                     type: 'deposit',
-                    description: `Top-up via ${requestData.method}`,
+                    description: `Top-up via ${requestData!.method}`,
                     date: serverTimestamp(),
                     status: 'COMPLETED',
-                    gatewayTransactionId: requestData.transactionId,
+                    gatewayTransactionId: requestData!.transactionId,
                 });
             }
-            
+        });
+
+        // Send notification after the transaction is complete
+        if (requestData) {
             await createNotification({
                 userId: requestData.userId,
                 title: `Top-up Request ${newStatus}`,
                 description: `Your top-up request of ${requestData.amount} TK has been ${newStatus}.`,
                 link: '/wallet'
             });
-        });
+        }
 
         return { success: true };
     } catch (error: any) {
