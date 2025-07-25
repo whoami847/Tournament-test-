@@ -648,7 +648,7 @@ export default function ProfilePage() {
             </div>
             
             <div className="px-4 mt-6">
-                <Tabs defaultValue="history" className="w-full">
+                <Tabs defaultValue="info" className="w-full">
                     <TabsList className="flex w-full justify-start gap-2 overflow-x-auto rounded-full border bg-card p-1 sm:justify-center no-scrollbar">
                         <TabsTrigger value="info" className="shrink-0 rounded-full bg-muted data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none">Information</TabsTrigger>
                         <TabsTrigger value="team" className="shrink-0 rounded-full bg-muted data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none">Team</TabsTrigger>
