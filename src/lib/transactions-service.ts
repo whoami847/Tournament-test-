@@ -9,8 +9,6 @@ export const getTransactionsStream = (
   callback: (transactions: Transaction[]) => void
 ) => {
   const transactionsCollection = collection(firestore, 'transactions');
-  // The query with `where` on 'userId' and `orderBy` on 'date' requires a composite index.
-  // To avoid this, we query only with `where` and sort the results on the client side.
   const q = query(
     transactionsCollection,
     where('userId', '==', userId)
@@ -20,16 +18,14 @@ export const getTransactionsStream = (
     const transactions: Transaction[] = [];
     querySnapshot.forEach((doc) => {
       const data = doc.data();
-      // Ensure date exists before processing
-      if (data.date) {
-        transactions.push({
-          id: doc.id,
-          ...data,
-          date: toIsoString(data.date),
-        } as Transaction);
-      }
+      // Ensure date exists, but if not, fallback to current date to prevent items from being hidden.
+      transactions.push({
+        id: doc.id,
+        ...data,
+        date: data.date ? toIsoString(data.date) : new Date().toISOString(),
+      } as Transaction);
     });
-    // Sort client-side
+    // Sort client-side to avoid composite index requirement
     transactions.sort((a, b) => new Date(b.date as string).getTime() - new Date(a.date as string).getTime());
     callback(transactions);
   }, (error) => {
