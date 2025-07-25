@@ -187,3 +187,65 @@ export const leaveTeam = async (userId: string, teamId: string) => {
         return { success: false, error: error.message };
     }
 }
+
+export const updateTeamMember = async (teamId: string, oldGamerId: string, updatedMember: { name: string, gamerId: string }) => {
+    const teamDocRef = doc(teamsCollection, teamId);
+    try {
+        await runTransaction(firestore, async (transaction) => {
+            const teamDoc = await transaction.get(teamDocRef);
+            if (!teamDoc.exists()) throw new Error("Team not found.");
+            const teamData = teamDoc.data() as UserTeam;
+
+            const memberIndex = teamData.members.findIndex(m => m.gamerId === oldGamerId);
+            if (memberIndex === -1) throw new Error("Member not found.");
+
+            // Check if new gamerId already exists (if it's being changed)
+            if (oldGamerId !== updatedMember.gamerId && teamData.memberGamerIds.includes(updatedMember.gamerId)) {
+                throw new Error("A member with this Gamer ID already exists in the team.");
+            }
+
+            const newMembers = [...teamData.members];
+            newMembers[memberIndex] = { ...newMembers[memberIndex], ...updatedMember };
+            
+            const newGamerIds = teamData.memberGamerIds.map(id => id === oldGamerId ? updatedMember.gamerId : id);
+            
+            transaction.update(teamDocRef, { members: newMembers, memberGamerIds: newGamerIds });
+        });
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+};
+
+export const removeMemberFromTeam = async (teamId: string, memberGamerId: string) => {
+    const teamDocRef = doc(teamsCollection, teamId);
+    try {
+        await runTransaction(firestore, async (transaction) => {
+            const teamDoc = await transaction.get(teamDocRef);
+            if (!teamDoc.exists()) throw new Error("Team not found.");
+            const teamData = teamDoc.data() as UserTeam;
+
+            const memberToRemove = teamData.members.find(m => m.gamerId === memberGamerId);
+            if (!memberToRemove) throw new Error("Member not found.");
+            
+            // Cannot remove the leader
+            if (memberToRemove.uid === teamData.leaderId) {
+                throw new Error("Cannot remove the team leader.");
+            }
+
+            const updatedMembers = teamData.members.filter(m => m.gamerId !== memberGamerId);
+            const updatedGamerIds = teamData.memberGamerIds.filter(id => id !== memberGamerId);
+
+            transaction.update(teamDocRef, { members: updatedMembers, memberGamerIds: updatedGamerIds });
+
+            // If the removed member was a registered user, update their profile
+            if (memberToRemove.uid) {
+                const userDocRef = doc(usersCollection, memberToRemove.uid);
+                transaction.update(userDocRef, { teamId: '' });
+            }
+        });
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+};

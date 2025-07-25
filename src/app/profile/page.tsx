@@ -16,7 +16,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, User, Gamepad2, Mail, Calendar, Users, Shield, Trophy, Star, Flame, LogOut, Pencil, Check, X, Loader2, UserPlus, LogOut as LeaveIcon, Search, Award } from 'lucide-react';
+import { MoreHorizontal, User, Gamepad2, Mail, Calendar, Users, Shield, Trophy, Star, Flame, LogOut, Pencil, Check, X, Loader2, UserPlus, LogOut as LeaveIcon, Search, Award, Trash2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { signOutUser } from '@/lib/auth-service';
@@ -33,6 +33,16 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
@@ -42,7 +52,9 @@ import {
     sendTeamInvite,
     addMemberManually,
     respondToInvite,
-    leaveTeam
+    leaveTeam,
+    removeMemberFromTeam,
+    updateTeamMember
 } from '@/lib/teams-service';
 import { getNotificationsStream } from '@/lib/notifications-service';
 import { getTournamentsStream } from '@/lib/tournaments-service';
@@ -100,6 +112,9 @@ const TeamInfo = ({ profile }: { profile: PlayerProfile }) => {
     // Dialog states
     const [isCreateTeamOpen, setCreateTeamOpen] = useState(false);
     const [isAddMemberOpen, setAddMemberOpen] = useState(false);
+    const [isEditMemberOpen, setEditMemberOpen] = useState(false);
+    const [memberToEdit, setMemberToEdit] = useState<TeamMember | null>(null);
+    const [memberToRemove, setMemberToRemove] = useState<TeamMember | null>(null);
     
     // Form states
     const [newTeamName, setNewTeamName] = useState('');
@@ -108,6 +123,10 @@ const TeamInfo = ({ profile }: { profile: PlayerProfile }) => {
     const [foundUser, setFoundUser] = useState<PlayerProfile | null>(null);
     const [searchStatus, setSearchStatus] = useState<'idle' | 'searching' | 'found' | 'not_found'>('idle');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    // Edit form state
+    const [editName, setEditName] = useState('');
+    const [editGamerId, setEditGamerId] = useState('');
 
     useEffect(() => {
         if (!profile.id) return;
@@ -129,6 +148,13 @@ const TeamInfo = ({ profile }: { profile: PlayerProfile }) => {
             return () => unsubInvites();
         }
     }, [profile]);
+    
+     const openEditDialog = (member: TeamMember) => {
+        setMemberToEdit(member);
+        setEditName(member.name);
+        setEditGamerId(member.gamerId);
+        setEditMemberOpen(true);
+    };
 
     const resetAddMemberDialog = () => {
         setSearchGamerId('');
@@ -220,6 +246,34 @@ const TeamInfo = ({ profile }: { profile: PlayerProfile }) => {
         }
         setIsSubmitting(false);
     }
+    
+    const handleUpdateMember = async () => {
+        if (!team || !memberToEdit) return;
+        setIsSubmitting(true);
+        const result = await updateTeamMember(team.id, memberToEdit.gamerId, { name: editName, gamerId: editGamerId });
+        if (result.success) {
+            toast({ title: "Member Updated" });
+            setEditMemberOpen(false);
+            setMemberToEdit(null);
+        } else {
+            toast({ title: "Error", description: result.error, variant: "destructive" });
+        }
+        setIsSubmitting(false);
+    };
+
+    const handleRemoveMember = async () => {
+        if (!team || !memberToRemove) return;
+        setIsSubmitting(true);
+        const result = await removeMemberFromTeam(team.id, memberToRemove.gamerId);
+        if (result.success) {
+            toast({ title: "Member Removed" });
+            setMemberToRemove(null);
+        } else {
+            toast({ title: "Error", description: result.error, variant: "destructive" });
+        }
+        setIsSubmitting(false);
+    };
+
 
     if (loading) {
         return <Card><CardHeader><CardTitle>My Team</CardTitle></CardHeader><CardContent><p>Loading team info...</p></CardContent></Card>
@@ -264,6 +318,7 @@ const TeamInfo = ({ profile }: { profile: PlayerProfile }) => {
     const isLeader = team.leaderId === profile.id;
 
     return (
+    <>
     <Card>
         <CardHeader className="flex-row items-center justify-between">
             <CardTitle>My Team</CardTitle>
@@ -372,21 +427,83 @@ const TeamInfo = ({ profile }: { profile: PlayerProfile }) => {
                 </h4>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {team.members.map(member => (
-                        <div key={member.uid || member.gamerId} className="flex items-center gap-3 rounded-md bg-muted p-2">
-                            <Avatar className="h-8 w-8">
-                                <AvatarImage src={member.avatar} alt={member.name} />
-                                <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <p className="font-medium">{member.name}</p>
-                                {!member.uid && <p className="text-xs text-muted-foreground">(Manual Add)</p>}
+                        <div key={member.uid || member.gamerId} className="flex items-center justify-between rounded-md bg-muted p-2">
+                            <div className="flex items-center gap-3 overflow-hidden">
+                                <Avatar className="h-8 w-8">
+                                    <AvatarImage src={member.avatar} alt={member.name} />
+                                    <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div className="overflow-hidden">
+                                    <p className="font-medium truncate">{member.name}</p>
+                                    {!member.uid && <p className="text-xs text-muted-foreground">(Manual Add)</p>}
+                                </div>
                             </div>
+                             {isLeader && member.uid !== profile.id && (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0"><MoreHorizontal className="h-4 w-4" /></Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent>
+                                        <DropdownMenuItem onSelect={() => openEditDialog(member)}>
+                                            <Pencil className="mr-2 h-4 w-4" /> Edit
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => setMemberToRemove(member)} className="text-destructive focus:text-destructive">
+                                            <Trash2 className="mr-2 h-4 w-4" /> Remove
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            )}
                         </div>
                     ))}
                 </div>
             </div>
         </CardContent>
     </Card>
+
+    {/* Edit Member Dialog */}
+    <Dialog open={isEditMemberOpen} onOpenChange={setEditMemberOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Edit Team Member</DialogTitle>
+                <DialogDescription>Update the details for {memberToEdit?.name}.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-name" className="text-right">Name</Label>
+                    <Input id="edit-name" value={editName} onChange={(e) => setEditName(e.target.value)} className="col-span-3" />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="edit-gamer-id" className="text-right">Gamer ID</Label>
+                    <Input id="edit-gamer-id" value={editGamerId} onChange={(e) => setEditGamerId(e.target.value)} className="col-span-3" disabled={!!memberToEdit?.uid} />
+                </div>
+            </div>
+            <DialogFooter>
+                <Button variant="outline" onClick={() => setEditMemberOpen(false)}>Cancel</Button>
+                <Button onClick={handleUpdateMember} disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="animate-spin" /> : "Save Changes"}
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
+    {/* Remove Member Confirmation */}
+    <AlertDialog open={!!memberToRemove} onOpenChange={(open) => !open && setMemberToRemove(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This will permanently remove {memberToRemove?.name} from the team. This action cannot be undone.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleRemoveMember} disabled={isSubmitting} className="bg-destructive hover:bg-destructive/90">
+                    {isSubmitting ? <Loader2 className="animate-spin" /> : "Remove"}
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    </>
     );
 };
 
@@ -674,5 +791,3 @@ export default function ProfilePage() {
         </div>
     );
 }
-
-    
