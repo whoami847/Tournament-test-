@@ -252,12 +252,14 @@ export default function JoinTournamentClient() {
                                 <CommandGroup>
                                     {availableTeamMembers.map(member => (
                                         <CommandItem
-                                            key={member.uid}
+                                            key={member.gamerId}
                                             value={member.name}
                                             onSelect={() => {
                                                 form.setValue(`players.${index}.name`, member.name);
                                                 form.setValue(`players.${index}.id`, member.gamerId);
-                                                form.setValue(`players.${index}.uid`, member.uid);
+                                                if (member.uid) {
+                                                    form.setValue(`players.${index}.uid`, member.uid);
+                                                }
                                                 // Close popover
                                                 document.body.click(); 
                                             }}
