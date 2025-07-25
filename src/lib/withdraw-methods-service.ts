@@ -1,3 +1,4 @@
+
 import type { WithdrawMethod } from '@/types';
 import { firestore } from './firebase';
 import { collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy, where, getDocs } from 'firebase/firestore';
@@ -26,9 +27,14 @@ export const getWithdrawMethodsStream = (callback: (methods: WithdrawMethod[]) =
 };
 
 export const getActiveWithdrawMethods = async (): Promise<WithdrawMethod[]> => {
-    const q = query(methodsCollection, where('status', '==', 'active'), orderBy('name'));
+    // Removed orderBy('name') to avoid needing a composite index. 
+    // We can sort on the client side if needed.
+    const q = query(methodsCollection, where('status', '==', 'active'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WithdrawMethod));
+    const methods = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as WithdrawMethod));
+    // Sort client-side
+    methods.sort((a, b) => a.name.localeCompare(b.name));
+    return methods;
 }
 
 export const updateWithdrawMethod = async (id: string, data: Partial<Omit<WithdrawMethod, 'id'>>) => {
