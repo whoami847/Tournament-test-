@@ -151,7 +151,7 @@ const TeamInfo = ({ profile }: { profile: PlayerProfile }) => {
         } else {
             toast({ title: "Error", description: result.error, variant: "destructive" });
         }
-        setIsSubmitting(true);
+        setIsSubmitting(false);
     }
     
     const handleFindUser = async () => {
@@ -174,6 +174,7 @@ const TeamInfo = ({ profile }: { profile: PlayerProfile }) => {
         if (result.success) {
             toast({ title: "Invite Sent!", description: `Invitation sent to ${foundUser.name}.` });
             setAddMemberOpen(false);
+            resetAddMemberDialog();
         } else {
             toast({ title: "Error", description: result.error, variant: "destructive" });
         }
@@ -187,6 +188,7 @@ const TeamInfo = ({ profile }: { profile: PlayerProfile }) => {
         if (result.success) {
             toast({ title: "Member Added!", description: `${manualAddName.trim()} has been added to the team.` });
             setAddMemberOpen(false);
+            resetAddMemberDialog();
         } else {
             toast({ title: "Error", description: result.error, variant: "destructive" });
         }
@@ -672,3 +674,5 @@ export default function ProfilePage() {
         </div>
     );
 }
+
+    
