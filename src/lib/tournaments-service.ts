@@ -15,6 +15,7 @@ import {
   writeBatch,
   arrayUnion,
   increment,
+  setDoc,
 } from 'firebase/firestore';
 import type { Tournament, Team, Match, Round, TeamType, PlayerProfile } from '@/types';
 import { toIsoString, toTimestamp } from './utils';
