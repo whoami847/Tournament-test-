@@ -11,7 +11,8 @@ export async function POST(req: NextRequest) {
   try {
     const { amount, userId, name, email } = await req.json();
     const headerList = headers();
-    const clientHost = headerList.get('host') || 'unknown';
+    const clientHost = headerList.get('host') || 'localhost:3000';
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
 
     if (!userId || !amount || amount < 10) {
       return NextResponse.json(
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || `https://${clientHost}`;
+    const siteUrl = `${protocol}://${clientHost}`;
 
     const payload = {
         fullname: name,
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
         amount: amount.toString(),
         success_url: `${siteUrl}/payment/success`,
         cancel_url: `${siteUrl}/payment/cancel`,
-        webhook_url: `${siteUrl}/api/payment/callback`, // This is the IPN URL
+        webhook_url: `${siteUrl}/api/payment/callback`,
     };
 
     const response = await fetch(RUPANTORPAY_CHECKOUT_URL, {
@@ -68,12 +69,13 @@ export async function POST(req: NextRequest) {
 
     const transaction_id = data.transaction_id;
 
+    // Use the transaction_id from RupantorPay as the document ID
     await setDoc(doc(firestore, 'orders', transaction_id), {
       userId,
       amount,
       customerName: name,
       customerEmail: email,
-      tran_id: transaction_id,
+      tran_id: transaction_id, // Redundant but good for querying
       status: 'PENDING',
       gateway: gateway.name,
       createdAt: serverTimestamp(),
