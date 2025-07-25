@@ -12,12 +12,16 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ArrowLeft, Camera } from 'lucide-react';
+import { ArrowLeft, Camera, Loader2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EditProfileForm, type EditProfileFormValues } from '@/components/profile/edit-profile-form';
 
+const IMGBB_API_KEY = "a1fce2f5bdc7ab36c7fb4a0c7c0e9286";
+const IMGBB_UPLOAD_URL = "https://api.imgbb.com/1/upload";
+
+
 // Helper function to compress images
-const compressImage = (file: File): Promise<File> => {
+const compressImage = (file: File, quality = 0.7): Promise<Blob> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
@@ -55,14 +59,10 @@ const compressImage = (file: File): Promise<File> => {
               if (!blob) {
                 return reject(new Error('Canvas to Blob failed.'));
               }
-              const compressedFile = new File([blob], file.name, {
-                type: 'image/jpeg',
-                lastModified: Date.now(),
-              });
-              resolve(compressedFile);
+              resolve(blob);
             },
             'image/jpeg',
-            0.7 // 70% quality
+            quality
           );
         };
         img.onerror = (err) => reject(err);
@@ -81,6 +81,10 @@ export default function EditProfilePage() {
   
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  
+  const [isAvatarUploading, setIsAvatarUploading] = useState(false);
+  const [isBannerUploading, setIsBannerUploading] = useState(false);
+  
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
@@ -97,42 +101,52 @@ export default function EditProfilePage() {
     }
   }, [user]);
 
-  const handleImageChange = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-    setImagePreview: React.Dispatch<React.SetStateAction<string | null>>
-  ) => {
-    let file = event.target.files?.[0];
-    if (!file) return;
+ const handleImageUpload = async (file: File, type: 'avatar' | 'banner') => {
+    if (type === 'avatar') setIsAvatarUploading(true);
+    if (type === 'banner') setIsBannerUploading(true);
 
     try {
-        if (file.size > 500 * 1024) { // 500KB limit
-            toast({
-                title: 'Compressing Large Image',
-                description: "This may take a moment...",
-            });
-            file = await compressImage(file);
-        }
+        const compressedBlob = await compressImage(file);
+        
+        const formData = new FormData();
+        formData.append('key', IMGBB_API_KEY);
+        formData.append('image', compressedBlob, file.name);
 
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setImagePreview(reader.result as string);
+        const response = await fetch(IMGBB_UPLOAD_URL, {
+            method: 'POST',
+            body: formData,
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            const url = result.data.url;
+            if (type === 'avatar') setAvatarPreview(url);
+            if (type === 'banner') setBannerPreview(url);
             toast({
                 title: 'Image Ready',
                 description: 'Image has been updated. Click "Save Changes" to apply.',
             });
-        };
-        reader.onerror = () => {
-            throw new Error('Failed to read the file.');
-        };
-        reader.readAsDataURL(file);
-
+        } else {
+            throw new Error(result.error?.message || 'Failed to upload image.');
+        }
     } catch (e) {
         toast({
             title: 'Upload Failed',
-            description: (e as Error).message || "An unexpected error occurred.",
+            description: (e as Error).message,
             variant: 'destructive',
         });
+    } finally {
+        if (type === 'avatar') setIsAvatarUploading(false);
+        if (type === 'banner') setIsBannerUploading(false);
     }
+ };
+
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner') => {
+      let file = event.target.files?.[0];
+      if (!file) return;
+      await handleImageUpload(file, type);
   };
 
   const handleProfileUpdate = async (data: EditProfileFormValues) => {
@@ -195,14 +209,14 @@ export default function EditProfilePage() {
       <input
         type="file"
         ref={bannerInputRef}
-        onChange={(e) => handleImageChange(e, setBannerPreview)}
+        onChange={(e) => handleFileChange(e, 'banner')}
         className="hidden"
         accept="image/png, image/jpeg, image/webp"
       />
       <input
         type="file"
         ref={avatarInputRef}
-        onChange={(e) => handleImageChange(e, setAvatarPreview)}
+        onChange={(e) => handleFileChange(e, 'avatar')}
         className="hidden"
         accept="image/png, image/jpeg, image/webp"
       />
@@ -228,9 +242,10 @@ export default function EditProfilePage() {
                 size="sm"
                 className="bg-black/50 text-white hover:bg-black/70 hover:text-white border-white/50"
                 onClick={() => bannerInputRef.current?.click()}
+                disabled={isBannerUploading}
               >
-                <Camera className="mr-2 h-4 w-4" />
-                Upload Banner
+                {isBannerUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
+                {isBannerUploading ? 'Uploading...' : 'Upload Banner'}
               </Button>
         </div>
       </div>
@@ -246,13 +261,17 @@ export default function EditProfilePage() {
                 className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                 onClick={() => avatarInputRef.current?.click()}
               >
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-12 w-12 rounded-full text-white hover:bg-black/50 hover:text-white"
-                >
-                    <Camera className="h-6 w-6" />
-                </Button>
+                {isAvatarUploading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-white" />
+                ) : (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-12 w-12 rounded-full text-white hover:bg-black/50 hover:text-white"
+                    >
+                        <Camera className="h-6 w-6" />
+                    </Button>
+                )}
             </div>
         </div>
       </div>

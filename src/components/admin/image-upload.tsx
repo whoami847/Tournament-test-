@@ -4,16 +4,18 @@ import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Camera, AlertCircle } from 'lucide-react';
+import { Camera, AlertCircle, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { uploadImage } from '@/lib/storage-service';
+
+const IMGBB_API_KEY = "a1fce2f5bdc7ab36c7fb4a0c7c0e9286";
+const IMGBB_UPLOAD_URL = "https://api.imgbb.com/1/upload";
 
 interface ImageUploadProps {
   initialImageUrl?: string;
   onUploadComplete: (url: string) => void;
 }
 
-// Helper function to compress images, moved to a shared location conceptually
+// Helper function to compress images
 const compressImage = (file: File, quality = 0.7): Promise<Blob> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -26,9 +28,8 @@ const compressImage = (file: File, quality = 0.7): Promise<Blob> => {
                 const ctx = canvas.getContext('2d');
                 if (!ctx) return reject(new Error('Failed to get canvas context.'));
                 
-                // Keep aspect ratio
                 let { width, height } = img;
-                const maxDim = 1280; // Max dimension for general images
+                const maxDim = 1280;
                 if (width > height) {
                     if (width > maxDim) {
                         height = Math.round(height * (maxDim / width));
@@ -59,7 +60,6 @@ const compressImage = (file: File, quality = 0.7): Promise<Blob> => {
 export function ImageUpload({ initialImageUrl = '', onUploadComplete }: ImageUploadProps) {
   const [imageUrl, setImageUrl] = useState<string>(initialImageUrl);
   const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
@@ -70,20 +70,32 @@ export function ImageUpload({ initialImageUrl = '', onUploadComplete }: ImageUpl
 
     setUploading(true);
     setError(null);
-    setProgress(0);
 
     try {
-      const blobToUpload = await compressImage(file);
-      const fileName = file.name.split('.').slice(0, -1).join('.') + '.jpg';
-      const compressedFile = new File([blobToUpload], fileName, { type: 'image/jpeg' });
+      const compressedBlob = await compressImage(file);
       
-      const downloadURL = await uploadImage(compressedFile, `uploads/${Date.now()}-${compressedFile.name}`, setProgress);
-      setImageUrl(downloadURL);
-      onUploadComplete(downloadURL);
-      toast({
-        title: 'Image Uploaded',
-        description: 'The image is ready to be saved with the form.',
+      const formData = new FormData();
+      formData.append('key', IMGBB_API_KEY);
+      formData.append('image', compressedBlob, file.name);
+
+      const response = await fetch(IMGBB_UPLOAD_URL, {
+        method: 'POST',
+        body: formData,
       });
+
+      const result = await response.json();
+
+      if (result.success) {
+        const downloadURL = result.data.url;
+        setImageUrl(downloadURL);
+        onUploadComplete(downloadURL);
+        toast({
+          title: 'Image Uploaded',
+          description: 'The image is ready to be saved with the form.',
+        });
+      } else {
+        throw new Error(result.error?.message || 'Failed to upload image to ImgBB.');
+      }
     } catch (e) {
       const errorMessage = (e as Error).message || 'An unexpected error occurred during image upload.';
       setError(errorMessage);
@@ -133,9 +145,9 @@ export function ImageUpload({ initialImageUrl = '', onUploadComplete }: ImageUpl
       />
 
       {uploading && (
-        <div className="space-y-2">
-            <Progress value={progress} />
-            <p className="text-sm text-center text-muted-foreground">{`Uploading... ${Math.round(progress)}%`}</p>
+        <div className="flex items-center justify-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <p className="text-sm text-center text-muted-foreground">Uploading...</p>
         </div>
       )}
       
