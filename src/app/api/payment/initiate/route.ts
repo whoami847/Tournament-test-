@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
 
     const data = await response.json();
 
-    if (data.status !== 1 || !data.payment_url) {
+    if (data.status !== 1 || !data.payment_url || !data.transaction_id) {
       console.error("RupantorPay Error:", data);
       return NextResponse.json(
         { message: data.message || 'Failed to initiate payment with RupantorPay' },
@@ -66,8 +66,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Use transaction_id from RupantorPay response if available, otherwise generate one
-    const transaction_id = data.transaction_id || `${userId.substring(0, 5)}-${Date.now()}`;
+    const transaction_id = data.transaction_id;
 
     await setDoc(doc(firestore, 'orders', transaction_id), {
       userId,
