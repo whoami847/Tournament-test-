@@ -1,6 +1,6 @@
 import type { WithdrawRequest, PlayerProfile } from '@/types';
 import { firestore } from './firebase';
-import { collection, addDoc, doc, updateDoc, onSnapshot, query, where, orderBy, serverTimestamp, runTransaction } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, onSnapshot, query, where, orderBy, serverTimestamp, runTransaction, getDoc } from 'firebase/firestore';
 import { createNotification } from './notifications-service';
 
 const requestsCollection = collection(firestore, 'withdrawRequests');
@@ -8,7 +8,9 @@ const usersCollection = collection(firestore, 'users');
 const transactionsCollection = collection(firestore, 'transactions');
 
 export const getPendingWithdrawRequestsStream = (callback: (requests: WithdrawRequest[]) => void) => {
-  const q = query(requestsCollection, where('status', '==', 'pending'), orderBy('requestedAt', 'asc'));
+  // Removed orderBy('requestedAt') to avoid composite index requirement.
+  // Sorting will be handled client-side if necessary.
+  const q = query(requestsCollection, where('status', '==', 'pending'));
   const unsubscribe = onSnapshot(q, (snapshot) => {
     const requests: WithdrawRequest[] = [];
     snapshot.forEach((doc) => {
@@ -19,6 +21,8 @@ export const getPendingWithdrawRequestsStream = (callback: (requests: WithdrawRe
         requestedAt: (data.requestedAt?.toDate() ?? new Date()).toISOString(),
       } as WithdrawRequest);
     });
+    // Sort client-side
+    requests.sort((a, b) => new Date(a.requestedAt).getTime() - new Date(b.requestedAt).getTime());
     callback(requests);
   });
   return unsubscribe;
