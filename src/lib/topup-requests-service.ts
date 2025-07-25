@@ -9,7 +9,9 @@ const usersCollection = collection(firestore, 'users');
 const transactionsCollection = collection(firestore, 'transactions');
 
 export const getTopupRequestsStream = (callback: (requests: TopupRequest[]) => void) => {
-    const q = query(requestsCollection, where('status', '==', 'pending'), orderBy('requestedAt', 'asc'));
+    // Removed orderBy('requestedAt') to avoid needing a composite index.
+    // We will sort client-side.
+    const q = query(requestsCollection, where('status', '==', 'pending'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const requests: TopupRequest[] = [];
         snapshot.forEach((doc) => {
@@ -20,6 +22,8 @@ export const getTopupRequestsStream = (callback: (requests: TopupRequest[]) => v
                 requestedAt: (data.requestedAt?.toDate() ?? new Date()).toISOString(),
             } as TopupRequest);
         });
+        // Sort client-side to ensure oldest requests are shown first
+        requests.sort((a, b) => new Date(a.requestedAt as string).getTime() - new Date(b.requestedAt as string).getTime());
         callback(requests);
     });
     return unsubscribe;
