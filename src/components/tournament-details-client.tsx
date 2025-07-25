@@ -262,8 +262,9 @@ export default function TournamentDetailsClient({ initialTournament }: { initial
                           <InfoRow icon={Award} label="Per Kill Prize" value={`${tournament.perKillPrize || 0} TK`} index={1} />
                           <InfoRow icon={Ticket} label="Entry Fee" value={tournament.entryFee > 0 ? `${tournament.entryFee} TK` : 'Free'} index={2} />
                           <InfoRow icon={Users} label="Team Format" value={getEntryType(tournament.format)} index={3} />
-                          <InfoRow icon={MapIcon} label="Map" value={tournament.map || 'TBD'} index={4} />
-                          <InfoRow icon={Smartphone} label="Game Version" value={tournament.version || 'N/A'} index={5} />
+                          <InfoRow icon={Users} label="Total Squads" value={tournament.maxTeams} index={4} />
+                          <InfoRow icon={MapIcon} label="Map" value={tournament.map || 'TBD'} index={5} />
+                          <InfoRow icon={Smartphone} label="Game Version" value={tournament.version || 'N/A'} index={6} />
                       </div>
 
 
