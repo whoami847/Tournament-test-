@@ -25,15 +25,17 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { getUserProfileStream } from "@/lib/users-service";
-import type { PlayerProfile, Transaction, WithdrawMethod } from "@/types";
+import type { PlayerProfile, Transaction, WithdrawMethod, TopupMethod } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getTransactionsStream } from "@/lib/transactions-service";
 import { createWithdrawalRequest } from '@/lib/withdraw-requests-service';
 import { getActiveWithdrawMethods } from '@/lib/withdraw-methods-service';
+import { getActiveTopupMethods } from '@/lib/topup-settings-service';
+import { createTopupRequest } from '@/lib/topup-requests-service';
 import { format } from 'date-fns';
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-
+import { Textarea } from "@/components/ui/textarea";
 
 // --- SUB-COMPONENTS ---
 
@@ -51,6 +53,134 @@ const WalletHeader = ({ profile }: { profile: PlayerProfile | null }) => (
         </div>
     </header>
 );
+
+const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
+    const { toast } = useToast();
+    const [isOpen, setIsOpen] = useState(false);
+    const [step, setStep] = useState(1);
+    const [amount, setAmount] = useState('');
+    const [transactionId, setTransactionId] = useState('');
+    const [selectedMethod, setSelectedMethod] = useState<TopupMethod | null>(null);
+    const [methods, setMethods] = useState<TopupMethod[]>([]);
+    const [loadingMethods, setLoadingMethods] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const fetchMethods = useCallback(async () => {
+        setLoadingMethods(true);
+        try {
+            const data = await getActiveTopupMethods();
+            setMethods(data);
+        } catch (error) {
+            toast({ title: "Error", description: "Could not fetch top-up methods.", variant: "destructive" });
+        } finally {
+            setLoadingMethods(false);
+        }
+    }, [toast]);
+
+    const handleOpenChange = (open: boolean) => {
+        setIsOpen(open);
+        if (open) {
+            fetchMethods();
+        }
+        if (!open) {
+            // Reset state on close
+            setStep(1);
+            setAmount('');
+            setTransactionId('');
+            setSelectedMethod(null);
+        }
+    };
+    
+    const handleMethodSelect = (method: TopupMethod) => {
+        setSelectedMethod(method);
+        setStep(2);
+    }
+    
+    const handleRequestSubmit = async () => {
+        if (!selectedMethod || !amount || !transactionId) {
+            toast({ title: "Missing Information", description: "Please provide all required details.", variant: "destructive" });
+            return;
+        }
+
+        setIsSubmitting(true);
+        const requestData = {
+            userId: profile.id,
+            userName: profile.name,
+            userGamerId: profile.gamerId,
+            amount: parseFloat(amount),
+            method: selectedMethod.name,
+            transactionId: transactionId,
+        };
+        const result = await createTopupRequest(requestData);
+
+        if (result.success) {
+            toast({ title: "Top-up Request Submitted", description: "Your request is pending admin approval." });
+            handleOpenChange(false);
+        } else {
+            toast({ title: "Error", description: result.error, variant: "destructive" });
+        }
+        setIsSubmitting(false);
+    }
+
+    return (
+        <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+            <DialogTrigger asChild>
+                <Button className="bg-white/20 hover:bg-white/30 text-white font-bold text-xs h-8 px-3 backdrop-blur-sm rounded-md">
+                    <ArrowUp className="mr-2 h-4 w-4" /> Add Money
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                    <DialogTitle>Add Money to Wallet</DialogTitle>
+                    <DialogDescription>
+                        {step === 1 ? "Select a method to add funds to your wallet." : "Follow the instructions and submit your request."}
+                    </DialogDescription>
+                </DialogHeader>
+                {step === 1 && (
+                     <div className="space-y-4 py-4">
+                        {loadingMethods ? <Loader2 className="mx-auto h-6 w-6 animate-spin" /> : methods.length > 0 ? (
+                            <div className="grid grid-cols-2 gap-4">
+                                {methods.map(method => (
+                                    <button key={method.id} onClick={() => handleMethodSelect(method)} className="flex flex-col items-center justify-center gap-2 rounded-md border p-4 text-center hover:bg-accent hover:border-primary">
+                                        <Avatar className="h-12 w-12"><AvatarImage src={method.image} /><AvatarFallback>{method.name.charAt(0)}</AvatarFallback></Avatar>
+                                        <p className="font-semibold text-sm">{method.name}</p>
+                                    </button>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-center text-muted-foreground">No active top-up methods available.</p>
+                        )}
+                    </div>
+                )}
+                 {step === 2 && selectedMethod && (
+                    <div className="space-y-4 py-4">
+                        <Button variant="link" onClick={() => setStep(1)} className="p-0 h-auto text-sm">&larr; Back to methods</Button>
+                        <Alert>
+                            <AlertTitle>{selectedMethod.name} Instructions</AlertTitle>
+                            <AlertDescription className="whitespace-pre-wrap">{selectedMethod.instructions}</AlertDescription>
+                        </Alert>
+                         <div className="space-y-2">
+                            <Label htmlFor="amount">Amount (TK)</Label>
+                            <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="e.g., 500" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="transactionId">Transaction ID</Label>
+                            <Input id="transactionId" value={transactionId} onChange={(e) => setTransactionId(e.target.value)} placeholder="Enter the transaction ID from your payment" />
+                        </div>
+                    </div>
+                )}
+                <DialogFooter>
+                    <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+                    {step === 2 && (
+                        <Button onClick={handleRequestSubmit} disabled={isSubmitting}>
+                            {isSubmitting ? <Loader2 className="animate-spin" /> : "Submit Request"}
+                        </Button>
+                    )}
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
 
 const WithdrawDialog = ({ profile }: { profile: PlayerProfile }) => {
     const { toast } = useToast();
@@ -82,13 +212,9 @@ const WithdrawDialog = ({ profile }: { profile: PlayerProfile }) => {
             fetchMethods();
         }
         if (!open) {
-            // Reset state on close
             setAmount('');
             setAccountNumber('');
             setSelectedMethod(null);
-            // Don't reset methods so it's cached for the session
-            // setMethods([]);
-            // hasFetched.current = false;
         }
     };
 
@@ -251,6 +377,7 @@ const CardStack = ({ balance, profile }: { balance: number, profile: PlayerProfi
                 </div>
 
                 <div className="flex justify-start gap-4">
+                    {profile && <AddMoneyDialog profile={profile} />}
                     {profile && <WithdrawDialog profile={profile} />}
                 </div>
             </div>

@@ -1,4 +1,5 @@
 
+
 import type { Timestamp } from 'firebase/firestore';
 
 export type Game = string;
@@ -226,4 +227,24 @@ export interface PendingPrize {
   reason: string;
   status: 'pending' | 'approved' | 'rejected';
   createdAt: Timestamp | string;
+}
+
+export interface TopupMethod {
+  id: string;
+  name: string;
+  image?: string;
+  instructions: string;
+  status: 'active' | 'inactive';
+}
+
+export interface TopupRequest {
+  id: string;
+  userId: string;
+  userName: string;
+  userGamerId: string;
+  amount: number;
+  method: string;
+  transactionId: string;
+  status: 'pending' | 'approved' | 'rejected';
+  requestedAt: Timestamp | string;
 }
