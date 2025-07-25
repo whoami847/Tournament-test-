@@ -18,7 +18,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
@@ -157,7 +157,15 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
                         <Button variant="link" onClick={() => setStep(1)} className="p-0 h-auto text-sm">&larr; Back to methods</Button>
                         <Alert>
                             <AlertTitle>{selectedMethod.name} Instructions</AlertTitle>
-                            <AlertDescription className="whitespace-pre-wrap">{selectedMethod.instructions}</AlertDescription>
+                            <AlertDescription className="space-y-2">
+                                {selectedMethod.accountNumber && (
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-muted-foreground">Account Number:</span>
+                                        <span className="font-bold text-lg text-primary">{selectedMethod.accountNumber}</span>
+                                    </div>
+                                )}
+                                <p className="whitespace-pre-wrap pt-2 border-t">{selectedMethod.instructions}</p>
+                            </AlertDescription>
                         </Alert>
                          <div className="space-y-2">
                             <Label htmlFor="amount">Amount (TK)</Label>

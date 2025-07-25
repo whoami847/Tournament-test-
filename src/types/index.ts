@@ -108,19 +108,6 @@ export interface PlayerProfile {
   status: 'active' | 'banned';
 }
 
-export interface Order {
-  id: string;
-  userId: string;
-  customerName: string;
-  customerEmail: string;
-  amount: number;
-  tran_id: string;
-  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
-  gateway: 'RupantorPay';
-  createdAt: string;
-  gatewayResponse?: any;
-}
-
 export interface Transaction {
   id: string;
   userId: string;
@@ -233,6 +220,7 @@ export interface TopupMethod {
   id: string;
   name: string;
   image?: string;
+  accountNumber: string;
   instructions: string;
   status: 'active' | 'inactive';
 }

@@ -15,6 +15,7 @@ import { Textarea } from '../ui/textarea';
 const formSchema = z.object({
   name: z.string().min(2, "Method name is required."),
   image: z.string().url("Please upload an icon for the method."),
+  accountNumber: z.string().min(5, "Account number is required."),
   instructions: z.string().min(10, "Instructions must be at least 10 characters long."),
   status: z.enum(['active', 'inactive']),
 });
@@ -33,6 +34,7 @@ export function TopupSettingForm({ method, onSubmit, isSubmitting }: TopupSettin
         defaultValues: {
             name: method?.name || '',
             image: method?.image || '',
+            accountNumber: method?.accountNumber || '',
             instructions: method?.instructions || '',
             status: method?.status || 'active',
         },
@@ -60,12 +62,15 @@ export function TopupSettingForm({ method, onSubmit, isSubmitting }: TopupSettin
                 <FormField control={form.control} name="name" render={({ field }) => (
                     <FormItem><FormLabel>Method Name</FormLabel><FormControl><Input placeholder="e.g., bKash" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
+                 <FormField control={form.control} name="accountNumber" render={({ field }) => (
+                    <FormItem><FormLabel>Account Number</FormLabel><FormControl><Input placeholder="e.g., 01234567890" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
                 <FormField control={form.control} name="instructions" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Instructions for User</FormLabel>
                         <FormControl>
                             <Textarea
-                                placeholder="e.g., Send money to 01234567890 (Personal) and enter the Transaction ID below."
+                                placeholder="e.g., Send money to the number above (Personal) and enter the Transaction ID below."
                                 className="min-h-[120px]"
                                 {...field}
                             />
