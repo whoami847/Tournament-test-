@@ -5,9 +5,11 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import React, { useMemo, useState } from 'react';
-import { Video, Swords, Trophy, User, Users, Crown } from 'lucide-react';
+import { Video, Swords, Trophy, User, Users, Crown, ChevronDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
 
 // --- SOLO BRACKET COMPONENTS ---
 
@@ -163,6 +165,28 @@ const TeamDisplay = ({ team, score, isWinner, isLoser }: { team: Team | null, sc
         )}>
           {team.name.startsWith('Team ') ? (team.members || []).map(m => m.name).join(' & ') : team.name}
         </span>
+         {team.members && team.members.length > 0 && (
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-5 w-5 ml-1 flex-shrink-0">
+                        <ChevronDown className="h-3 w-3" />
+                    </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-2">
+                    <div className="space-y-2">
+                        <h4 className="font-semibold text-sm">Team Members</h4>
+                        <div className="space-y-1">
+                            {team.members.map((member, index) => (
+                                <div key={index} className="flex justify-between items-center text-xs">
+                                    <span>{member.name}</span>
+                                    <span className="text-muted-foreground">{member.gamerId}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </PopoverContent>
+            </Popover>
+        )}
     </>
   ) : (
     <>
@@ -249,7 +273,7 @@ const MatchCard = ({ match, highlightTeam1AsWinner, highlightTeam2AsWinner }: { 
 
 const SingleMatchDisplay = ({ match, highlightTeam1AsWinner, highlightTeam2AsWinner }: { match: Match | null, highlightTeam1AsWinner?: boolean, highlightTeam2AsWinner?: boolean }) => {
     return (
-      <div className="w-full md:w-40">
+      <div className="w-full md:w-48">
         <div className="flex justify-between items-center mb-1 h-4">
           <p className="text-[9px] text-muted-foreground">{match?.name ?? ''}</p>
           {match?.status === 'live' && (
