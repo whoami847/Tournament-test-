@@ -19,13 +19,8 @@ import { deleteGateway } from '@/lib/gateways';
 import { useToast } from '@/hooks/use-toast';
 
 export default function GatewaysPage() {
-  const { gateways, initializeGateways } = useStore();
+  const { gateways } = useStore();
   const { toast } = useToast();
-
-  useEffect(() => {
-    const unsubscribe = initializeGateways();
-    return () => unsubscribe();
-  }, [initializeGateways]);
 
   const handleDelete = async (gatewayId: string) => {
     if (window.confirm('Are you sure you want to delete this gateway?')) {
