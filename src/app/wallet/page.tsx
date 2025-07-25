@@ -51,6 +51,121 @@ const WalletHeader = ({ profile }: { profile: PlayerProfile | null }) => (
     </header>
 );
 
+const WithdrawDialog = ({ profile }: { profile: PlayerProfile }) => {
+    const { toast } = useToast();
+    const [isOpen, setIsOpen] = useState(false);
+    const [amount, setAmount] = useState('');
+    const [accountNumber, setAccountNumber] = useState('');
+    const [selectedMethod, setSelectedMethod] = useState<WithdrawMethod | null>(null);
+    const [methods, setMethods] = useState<WithdrawMethod[]>([]);
+    const [loadingMethods, setLoadingMethods] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setLoadingMethods(true);
+            getActiveWithdrawMethods().then(data => {
+                setMethods(data);
+                setLoadingMethods(false);
+            });
+        }
+    }, [isOpen]);
+
+    const handleWithdraw = async () => {
+        if (!selectedMethod || !amount || !accountNumber) {
+            toast({ title: "Missing Information", description: "Please select a method, enter an amount and account number.", variant: "destructive" });
+            return;
+        }
+
+        const withdrawAmount = parseFloat(amount);
+        if (withdrawAmount < selectedMethod.minAmount || withdrawAmount > selectedMethod.maxAmount) {
+            toast({ title: "Invalid Amount", description: `Amount must be between ${selectedMethod.minAmount} and ${selectedMethod.maxAmount} TK.`, variant: "destructive" });
+            return;
+        }
+
+        if (profile.balance < withdrawAmount) {
+            toast({ title: "Insufficient Balance", description: "You do not have enough funds to complete this withdrawal.", variant: "destructive" });
+            return;
+        }
+
+        setIsSubmitting(true);
+        const result = await createWithdrawalRequest(profile, withdrawAmount, selectedMethod.name, accountNumber);
+        if (result.success) {
+            toast({ title: "Withdrawal Request Submitted", description: "Your request is now pending admin approval." });
+            setIsOpen(false);
+            setAmount('');
+            setAccountNumber('');
+            setSelectedMethod(null);
+        } else {
+            toast({ title: "Error", description: result.error || "Failed to submit request.", variant: "destructive" });
+        }
+        setIsSubmitting(false);
+    };
+    
+    const fee = selectedMethod ? (parseFloat(amount || '0') * selectedMethod.feePercentage) / 100 : 0;
+    const receivableAmount = parseFloat(amount || '0') - fee;
+
+    return (
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            <DialogTrigger asChild>
+                <Button className="bg-white/20 hover:bg-white/30 text-white font-bold text-xs h-8 px-3 backdrop-blur-sm rounded-md">
+                    <ArrowDown className="mr-2 h-4 w-4" /> Withdraw
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Withdraw Funds</DialogTitle>
+                    <DialogDescription>Select a method and enter the amount you wish to withdraw.</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    {loadingMethods ? <Loader2 className="mx-auto h-6 w-6 animate-spin" /> : (
+                        <RadioGroup onValueChange={(value) => setSelectedMethod(methods.find(m => m.id === value) || null)}>
+                            {methods.map(method => (
+                                <Label key={method.id} htmlFor={method.id} className="flex items-center gap-3 rounded-md border p-3 has-[:checked]:border-primary">
+                                    <Avatar className="h-10 w-10"><AvatarImage src={method.image} /><AvatarFallback>{method.name.charAt(0)}</AvatarFallback></Avatar>
+                                    <div className="flex-grow">
+                                        <p className="font-semibold">{method.name}</p>
+                                        <p className="text-xs text-muted-foreground">Fee: {method.feePercentage}% • Limit: {method.minAmount}-{method.maxAmount}</p>
+                                    </div>
+                                    <RadioGroupItem value={method.id} id={method.id} />
+                                </Label>
+                            ))}
+                        </RadioGroup>
+                    )}
+                    
+                    {selectedMethod && (
+                        <div className="space-y-4 pt-4 border-t">
+                            <div>
+                                <Label htmlFor="amount">Amount to Withdraw (TK)</Label>
+                                <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder={`Min ${selectedMethod.minAmount}, Max ${selectedMethod.maxAmount}`} />
+                            </div>
+                            <div>
+                                <Label htmlFor="account-number">{selectedMethod.name} Number</Label>
+                                <Input id="account-number" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)} placeholder="Enter account number" />
+                            </div>
+                            <Alert>
+                                <AlertDescription className="text-sm">
+                                    <div className="flex justify-between"><span>Withdrawal Amount:</span> <span>{parseFloat(amount || '0').toFixed(2)} TK</span></div>
+                                    <div className="flex justify-between"><span>Fee ({selectedMethod.feePercentage}%):</span> <span>- {fee.toFixed(2)} TK</span></div>
+                                    <Separator className="my-1" />
+                                    <div className="flex justify-between font-bold"><span>You will receive:</span> <span>{receivableAmount.toFixed(2)} TK</span></div>
+                                </AlertDescription>
+                            </Alert>
+                        </div>
+                    )}
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+                    <Button onClick={handleWithdraw} disabled={!selectedMethod || isSubmitting}>
+                        {isSubmitting ? <Loader2 className="animate-spin" /> : "Confirm Withdraw"}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+
 const CardStack = ({ balance, profile }: { balance: number, profile: PlayerProfile | null }) => {
     return (
         <div className={cn("relative h-60 flex items-center justify-center group")}>
@@ -121,9 +236,7 @@ const CardStack = ({ balance, profile }: { balance: number, profile: PlayerProfi
                             <ArrowUp className="mr-2 h-4 w-4" /> Add Money
                         </Link>
                     </Button>
-                     <Button disabled variant="secondary" className="bg-white/20 hover:bg-white/30 text-white font-bold text-xs h-8 px-3 backdrop-blur-sm rounded-md">
-                        <ArrowDown className="mr-2 h-4 w-4" /> Withdraw
-                    </Button>
+                    {profile && <WithdrawDialog profile={profile} />}
                 </div>
             </div>
         </div>
@@ -136,6 +249,7 @@ const TransactionList = ({ transactions }: { transactions: Transaction[] }) => {
         withdrawal: <div className="p-3 bg-red-500/10 rounded-full"><ArrowDown className="h-5 w-5 text-red-400" /></div>,
         prize: <div className="p-3 bg-yellow-500/10 rounded-full"><Gift className="h-5 w-5 text-yellow-400" /></div>,
         fee: <div className="p-3 bg-gray-500/10 rounded-full"><Gamepad2 className="h-5 w-5 text-gray-400" /></div>,
+        admin_adjustment: <div className="p-3 bg-blue-500/10 rounded-full"><Landmark className="h-5 w-5 text-blue-400" /></div>,
     };
 
     return (
