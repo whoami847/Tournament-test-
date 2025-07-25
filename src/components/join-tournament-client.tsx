@@ -20,9 +20,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { getUserProfileStream } from '@/lib/users-service';
 import Link from 'next/link';
 import { getTeamStream } from '@/lib/teams-service';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
 const playerSchema = z.object({
   name: z.string().min(1, { message: "Player name is required." }),
@@ -35,12 +33,13 @@ const formSchema = z.object({
   players: z.array(playerSchema).min(1, "At least one player is required."),
 });
 
-const getTeamSize = (format: string): number => {
-  const type = format.split('_')[1]?.toUpperCase() || 'SQUAD';
+type JoinType = 'SOLO' | 'DUO' | 'SQUAD';
+
+const getTeamSize = (type: JoinType): number => {
   if (type === 'SOLO') return 1;
   if (type === 'DUO') return 2;
   if (type === 'SQUAD') return 4;
-  return 4; // Default to SQUAD if format is unexpected
+  return 4; // Default
 };
 
 const JoinPageSkeleton = () => (
@@ -99,13 +98,21 @@ export default function JoinTournamentClient() {
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isAlreadyJoined, setIsAlreadyJoined] = useState(false);
+    
+    const [selectedJoinType, setSelectedJoinType] = useState<JoinType>('SQUAD');
 
     // Fetch tournament data
     useEffect(() => {
         if (params.id) {
             const fetchTournament = async () => {
                 const data = await getTournament(params.id);
-                if (data) setTournament(data); else notFound();
+                if (data) {
+                    setTournament(data);
+                    const formatType = data.format.split('_')[1]?.toUpperCase() as JoinType || 'SQUAD';
+                    setSelectedJoinType(formatType);
+                } else {
+                    notFound();
+                }
             };
             fetchTournament();
         }
@@ -144,8 +151,6 @@ export default function JoinTournamentClient() {
         }
     }, [tournament, profile]);
 
-    const requiredTeamSize = tournament ? getTeamSize(tournament.format) : 1;
-    
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -161,6 +166,7 @@ export default function JoinTournamentClient() {
 
     // Effect to set the number of player fields based on tournament type
     useEffect(() => {
+        const requiredTeamSize = getTeamSize(selectedJoinType);
         const currentPlayers = form.getValues('players');
         const newPlayers = Array.from({ length: requiredTeamSize }, (_, i) => 
             currentPlayers[i] || { name: '', id: '' }
@@ -173,14 +179,7 @@ export default function JoinTournamentClient() {
             form.setValue('players.0.id', profile.gamerId);
             form.setValue('players.0.uid', profile.id);
         }
-    }, [requiredTeamSize, profile, replace, form]);
-
-    const availableTeamMembers = useMemo(() => {
-        if (!team) return [];
-        const selectedPlayerUids = form.watch('players').map(p => p.uid).filter(Boolean);
-        return team.members.filter(m => !selectedPlayerUids.includes(m.uid));
-    }, [team, form.watch('players')]);
-
+    }, [selectedJoinType, profile, replace, form]);
 
     async function onSubmit(values: z.infer<typeof formSchema>) {
         if (!tournament || !profile || !user) return;
@@ -214,18 +213,33 @@ export default function JoinTournamentClient() {
 
     const renderPlayerSlot = (index: number) => {
         const isLeaderSlot = index === 0;
-
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
                 <FormField control={form.control} name={`players.${index}.name`} render={({ field }) => (
-                    <FormItem><FormLabel>Gamer Name</FormLabel><FormControl><Input placeholder="Enter in-game name" {...field} disabled={isLeaderSlot} /></FormControl><FormMessage /></FormItem>
+                    <FormItem>
+                        <FormLabel>Gamer Name</FormLabel>
+                        <FormControl><Input placeholder="Enter in-game name" {...field} disabled={isLeaderSlot} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
                 )} />
                 <FormField control={form.control} name={`players.${index}.id`} render={({ field }) => (
-                    <FormItem><FormLabel>Gamer ID</FormLabel><FormControl><Input placeholder="Enter in-game ID" {...field} disabled={isLeaderSlot} /></FormControl><FormMessage /></FormItem>
+                    <FormItem>
+                        <FormLabel>Gamer ID</FormLabel>
+                        <FormControl><Input placeholder="Enter in-game ID" {...field} disabled={isLeaderSlot} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
                 )} />
             </div>
         )
     }
+
+    const joinOptions = useMemo(() => {
+        if (!tournament) return [];
+        const formatType = tournament.format.split('_')[1]?.toUpperCase() || 'SQUAD';
+        if (formatType === 'SOLO') return ['SOLO'];
+        if (formatType === 'DUO') return ['SOLO', 'DUO'];
+        return ['SOLO', 'DUO', 'SQUAD'];
+    }, [tournament]);
 
     if (loading) {
         return <JoinPageSkeleton />;
@@ -256,7 +270,7 @@ export default function JoinTournamentClient() {
         notFound();
     }
 
-    const showTeamNameInput = requiredTeamSize > 1;
+    const showTeamNameInput = getTeamSize(selectedJoinType) > 1;
 
     return (
         <div className="container mx-auto px-4 py-8 md:pb-8 pb-24">
@@ -276,6 +290,16 @@ export default function JoinTournamentClient() {
                 <CardContent>
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                            
+                            <div className="space-y-2">
+                                <Label className="text-center block">Join as</Label>
+                                <ToggleGroup type="single" value={selectedJoinType} onValueChange={(value: JoinType) => value && setSelectedJoinType(value)} className="justify-center">
+                                    {joinOptions.includes('SOLO') && <ToggleGroupItem value="SOLO" aria-label="Join as Solo">Solo</ToggleGroupItem>}
+                                    {joinOptions.includes('DUO') && <ToggleGroupItem value="DUO" aria-label="Join as Duo">Duo</ToggleGroupItem>}
+                                    {joinOptions.includes('SQUAD') && <ToggleGroupItem value="SQUAD" aria-label="Join as Squad">Squad</ToggleGroupItem>}
+                                </ToggleGroup>
+                            </div>
+
                             {showTeamNameInput && (
                                 <FormField
                                     control={form.control}
@@ -295,7 +319,7 @@ export default function JoinTournamentClient() {
                             <Separator />
                             
                             <div className="space-y-6">
-                                <h3 className="font-semibold text-xl text-center">Player Information ({requiredTeamSize} Player{requiredTeamSize > 1 ? 's' : ''})</h3>
+                                <h3 className="font-semibold text-xl text-center">Player Information ({getTeamSize(selectedJoinType)} Player{getTeamSize(selectedJoinType) > 1 ? 's' : ''})</h3>
                                 {fields.map((field, index) => (
                                     <div key={field.id} className="p-4 border rounded-lg bg-background shadow-sm relative">
                                         <span className="absolute -top-3 left-4 bg-background px-1 text-sm text-muted-foreground">{index === 0 ? 'You (Player 1)' : `Player ${index + 1}`}</span>
