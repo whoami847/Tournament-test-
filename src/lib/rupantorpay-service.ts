@@ -37,7 +37,7 @@ export async function initiatePayment(payload: PaymentPayload): Promise<string |
             headers: {
                 'Content-Type': 'application/json',
                 'X-API-KEY': apiKey,
-                'X-CLIENT': process.env.NEXT_PUBLIC_APP_URL || 'localhost',
+                'X-CLIENT': 'esports-hq-app',
             },
             body: JSON.stringify(requestBody),
         });
@@ -88,4 +88,3 @@ export async function verifyPayment(payload: VerificationPayload) {
         throw error;
     }
 }
-
