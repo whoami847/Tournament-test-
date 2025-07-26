@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { getGatewaySettings, saveGatewaySettings } from '@/lib/gateway-settings-service';
@@ -15,10 +15,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const rupantorPaySchema = z.object({
-    apiKey: z.string().min(1, 'API Key is required.'),
-    apiBaseUrl: z.string().url('Invalid URL.').min(1, 'API Base URL is required.'),
+    accessToken: z.string().min(1, 'Access Token (API Key) is required.'),
     successUrl: z.string().url('Invalid URL.').min(1, 'Success URL is required.'),
     cancelUrl: z.string().url('Invalid URL.').min(1, 'Cancel URL is required.'),
+    failUrl: z.string().url('Invalid URL.').min(1, 'Fail URL is required.'),
     webhookUrl: z.string().optional(),
 });
 
@@ -37,10 +37,10 @@ export default function AdminGatewaySettingsPage() {
         resolver: zodResolver(formSchema),
         defaultValues: {
             rupantorPay: {
-                apiKey: '',
-                apiBaseUrl: 'https://payment.rupantorpay.com/api',
+                accessToken: '',
                 successUrl: `${process.env.NEXT_PUBLIC_APP_URL}/payment/verify`,
                 cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL}/payment/verify`,
+                failUrl: `${process.env.NEXT_PUBLIC_APP_URL}/payment/verify`,
                 webhookUrl: '',
             },
         },
@@ -51,7 +51,12 @@ export default function AdminGatewaySettingsPage() {
             setLoading(true);
             const settings = await getGatewaySettings();
             if (settings && settings.rupantorPay) {
-                form.reset({ rupantorPay: settings.rupantorPay });
+                // Map old apiKey to new accessToken for backward compatibility
+                const mappedSettings = {
+                    ...settings.rupantorPay,
+                    accessToken: settings.rupantorPay.accessToken || (settings.rupantorPay as any).apiKey || '',
+                };
+                form.reset({ rupantorPay: mappedSettings });
             }
             setLoading(false);
         };
@@ -97,22 +102,11 @@ export default function AdminGatewaySettingsPage() {
                                 <div className="space-y-4">
                                     <FormField
                                         control={form.control}
-                                        name="rupantorPay.apiKey"
+                                        name="rupantorPay.accessToken"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>API Key (Secret)</FormLabel>
-                                                <FormControl><Input placeholder="Enter your RupantorPay API Key" {...field} /></FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="rupantorPay.apiBaseUrl"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>API Base URL</FormLabel>
-                                                <FormControl><Input placeholder="https://payment.rupantorpay.com/api" {...field} /></FormControl>
+                                                <FormLabel>Access Token (API Key)</FormLabel>
+                                                <FormControl><Input placeholder="Enter your RupantorPay Access Token" {...field} /></FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -134,6 +128,17 @@ export default function AdminGatewaySettingsPage() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Cancel URL</FormLabel>
+                                                <FormControl><Input {...field} /></FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                     <FormField
+                                        control={form.control}
+                                        name="rupantorPay.failUrl"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Fail URL</FormLabel>
                                                 <FormControl><Input {...field} /></FormControl>
                                                 <FormMessage />
                                             </FormItem>

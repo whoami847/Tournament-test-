@@ -249,10 +249,10 @@ export interface TopupRequest {
 // --- Gateway Settings ---
 
 export interface RupantorPaySettings {
-  apiKey: string;
-  apiBaseUrl: string;
+  accessToken: string;
   successUrl: string;
   cancelUrl: string;
+  failUrl: string;
   webhookUrl?: string;
 }
 

@@ -4,10 +4,13 @@
 import type { GatewaySettings } from '@/types';
 import { getGatewaySettings } from './gateway-settings-service';
 
+const RUPANTORPAY_API_BASE_URL = 'https://payment.rupantorpay.com/api/payment';
+
 interface PaymentPayload {
     amount: number;
-    fullname: string;
-    email: string;
+    customer_name: string;
+    customer_email: string;
+    customer_phone: string;
     metadata?: { [key: string]: any };
 }
 
@@ -17,34 +20,36 @@ interface VerificationPayload {
 
 export async function initiatePayment(payload: PaymentPayload): Promise<string | null> {
     const settings = await getGatewaySettings();
-    if (!settings?.rupantorPay?.apiKey) {
-        throw new Error('RupantorPay API key is not configured.');
+    if (!settings?.rupantorPay?.accessToken) {
+        throw new Error('RupantorPay Access Token is not configured.');
     }
 
-    const { apiKey, apiBaseUrl, successUrl, cancelUrl, webhookUrl } = settings.rupantorPay;
+    const { accessToken, successUrl, cancelUrl, failUrl, webhookUrl } = settings.rupantorPay;
 
     const requestBody = {
-      ...payload,
+      access_token: accessToken,
+      transaction_id: `TRN-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
       amount: payload.amount.toString(),
       success_url: successUrl,
       cancel_url: cancelUrl,
+      fail_url: failUrl,
+      customer_name: payload.customer_name,
+      customer_email: payload.customer_email,
+      customer_phone: payload.customer_phone,
       webhook_url: webhookUrl || undefined,
+      metadata: payload.metadata || undefined,
     };
     
     try {
-        const response = await fetch(`${apiBaseUrl}/payment/checkout`, {
+        const response = await fetch(`${RUPANTORPAY_API_BASE_URL}/checkout`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-API-KEY': apiKey,
-                'X-CLIENT': 'Aff tour',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody),
         });
         
         const data = await response.json();
 
-        if (response.ok && data.status === 1 && data.payment_url) {
+        if (response.ok && data.payment_url) {
             return data.payment_url;
         } else {
             console.error('RupantorPay Error:', data.message || 'Unknown error');
@@ -59,26 +64,27 @@ export async function initiatePayment(payload: PaymentPayload): Promise<string |
 
 export async function verifyPayment(payload: VerificationPayload) {
     const settings = await getGatewaySettings();
-    if (!settings?.rupantorPay?.apiKey) {
-        throw new Error('RupantorPay API key is not configured.');
+    if (!settings?.rupantorPay?.accessToken) {
+        throw new Error('RupantorPay Access Token is not configured.');
     }
 
-    const { apiKey, apiBaseUrl } = settings.rupantorPay;
+    const { accessToken } = settings.rupantorPay;
+
+     const requestBody = {
+        access_token: accessToken,
+        transaction_id: payload.transaction_id,
+    };
 
     try {
-        const response = await fetch(`${apiBaseUrl}/payment/verify-payment`, {
+        const response = await fetch(`${RUPANTORPAY_API_BASE_URL}/verify-payment`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-API-KEY': apiKey,
-                'X-CLIENT': 'Aff tour',
-            },
-            body: JSON.stringify(payload),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(requestBody),
         });
 
         const data = await response.json();
 
-        if (!response.ok || data.status === false) {
+        if (!response.ok) {
              throw new Error(data.message || 'Payment verification failed.');
         }
         

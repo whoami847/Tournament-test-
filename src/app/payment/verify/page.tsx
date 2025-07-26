@@ -29,59 +29,43 @@ function VerificationComponent() {
         return;
       }
       
-      if (payment_status !== 'COMPLETED') {
+      if (payment_status !== 'COMPLETED' && payment_status !== 'success') { // Allow both "COMPLETED" and "success"
         setStatus('failed');
         setMessage(`Payment was not successful. Status: ${payment_status || 'UNKNOWN'}`);
-        // Optionally update the order status to 'failed' or 'cancelled' in Firestore
-        const orderRef = doc(firestore, 'orders', transaction_id);
-        const orderDoc = await getDoc(orderRef);
-        if (orderDoc.exists()) {
-            await updateDoc(orderRef, { status: 'failed' });
-        }
         return;
       }
-      
-      const orderRef = doc(firestore, 'orders', transaction_id);
       
       try {
         const verificationResult = await verifyPayment({ transaction_id });
 
-        if (verificationResult.status !== 'COMPLETED') {
-            throw new Error('Payment could not be verified or is not complete.');
+        if (verificationResult.status !== 'COMPLETED' && verificationResult.status !== 'success') {
+            throw new Error(`Payment could not be verified or is not complete. Status: ${verificationResult.status}`);
+        }
+
+        const userId = verificationResult.metadata?.user_id;
+        if (!userId) {
+            throw new Error('User ID not found in payment metadata.');
         }
 
         await runTransaction(firestore, async (transaction) => {
-          const orderDoc = await transaction.get(orderRef);
-          
-          if (!orderDoc.exists()) {
-            throw new Error('Order not found in our system.');
-          }
-
-          const order = orderDoc.data() as Order;
-          if (order.status === 'success') {
-             setStatus('success');
-             setMessage('This payment has already been successfully processed.');
-             return;
-          }
-
-          if (parseFloat(verificationResult.amount) !== order.amount) {
-              throw new Error('Paid amount does not match order amount.');
-          }
-          
-          const userRef = doc(firestore, 'users', order.userId);
+          const userRef = doc(firestore, 'users', userId);
           const userDoc = await transaction.get(userRef);
           if (!userDoc.exists()) {
             throw new Error('User account not found.');
           }
+
+          const orderAmount = parseFloat(verificationResult.amount);
+          if (isNaN(orderAmount)) {
+             throw new Error('Invalid amount received from payment gateway.');
+          }
           
           const userData = userDoc.data() as PlayerProfile;
-          const newBalance = (userData.balance || 0) + order.amount;
+          const newBalance = (userData.balance || 0) + orderAmount;
 
           transaction.update(userRef, { balance: newBalance });
-          transaction.update(orderRef, { status: 'success' });
           
           setStatus('success');
-          setMessage(`Successfully added ${order.amount} TK to your wallet.`);
+          setMessage(`Successfully added ${orderAmount} TK to your wallet.`);
         });
       } catch (error: any) {
         setStatus('failed');

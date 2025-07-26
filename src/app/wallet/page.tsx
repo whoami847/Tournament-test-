@@ -152,25 +152,16 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
         }
         
         setIsAutoSubmitting(true);
-        const tran_id = `TOUR-${profile.id.slice(0, 5)}-${Date.now()}`;
-        const orderData: Omit<Order, 'id'> = {
-            userId: profile.id,
+        const paymentPayload = {
             amount: parseFloat(amount),
-            status: 'pending',
-            tran_id: tran_id,
+            customer_name: profile.name,
+            customer_email: profile.email,
+            customer_phone: '01234567890', // Assuming a placeholder, ideally this comes from profile
+            metadata: { user_id: profile.id },
         };
 
         try {
-            // Create order in Firestore first
-            await createOrder(orderData);
-
-            // Then initiate payment with RupantorPay
-            const paymentUrl = await initiatePayment({
-                amount: parseFloat(amount),
-                fullname: profile.name,
-                email: profile.email,
-                metadata: { order_id: orderData.tran_id, user_id: profile.id },
-            });
+            const paymentUrl = await initiatePayment(paymentPayload);
 
             if (paymentUrl) {
                 window.location.href = paymentUrl; // Redirect to payment gateway
