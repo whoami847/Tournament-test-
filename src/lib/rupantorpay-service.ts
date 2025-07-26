@@ -89,4 +89,3 @@ export async function verifyPayment(payload: VerificationPayload) {
         throw error;
     }
 }
-
