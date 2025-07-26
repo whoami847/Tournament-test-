@@ -36,7 +36,7 @@ import { format } from 'date-fns';
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { initiatePayment } from '@/lib/aamarpay-service';
+import { initiatePayment } from '@/lib/rupantorpay-service';
 
 // --- SUB-COMPONENTS ---
 
@@ -164,17 +164,12 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
             // Create order in Firestore first
             await createOrder(orderData);
 
-            // Then initiate payment
+            // Then initiate payment with RupantorPay
             const paymentUrl = await initiatePayment({
                 amount: parseFloat(amount),
-                tran_id: tran_id,
-                cus_name: profile.name,
-                cus_email: profile.email,
-                cus_phone: '01234567890', // Placeholder or fetch from profile
-                cus_add1: 'N/A', // Placeholder
-                cus_city: 'N/A', // Placeholder
-                cus_country: 'Bangladesh', // Placeholder
-                desc: `Tournament App Top-up for ${profile.name}`,
+                fullname: profile.name,
+                email: profile.email,
+                metadata: { order_id: orderData.tran_id, user_id: profile.id },
             });
 
             if (paymentUrl) {
@@ -250,9 +245,9 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
                         <Button variant="link" onClick={() => setStep(0)} className="p-0 h-auto text-sm">&larr; Back</Button>
                         <Alert>
                            <CreditCard className="h-4 w-4" />
-                           <AlertTitle>Pay with AamarPay</AlertTitle>
+                           <AlertTitle>Pay with RupantorPay</AlertTitle>
                            <AlertDescription>
-                             You will be redirected to the secure AamarPay gateway to complete your payment.
+                             You will be redirected to the secure RupantorPay gateway to complete your payment.
                            </AlertDescription>
                         </Alert>
                         <div className="space-y-2">

@@ -10,6 +10,7 @@ import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { verifyPayment } from '@/lib/rupantorpay-service';
 
 function VerificationComponent() {
   const searchParams = useSearchParams();
@@ -19,19 +20,36 @@ function VerificationComponent() {
 
   useEffect(() => {
     const verify = async () => {
-      const tran_id = searchParams.get('mer_txnid');
-      const pay_status = searchParams.get('pay_status');
-      const amount_paid = searchParams.get('amount');
+      const transaction_id = searchParams.get('transactionId');
+      const payment_status = searchParams.get('status');
 
-      if (!tran_id || !pay_status) {
+      if (!transaction_id) {
         setStatus('failed');
-        setMessage('Invalid payment response. Missing transaction details.');
+        setMessage('Invalid payment response. Missing transaction ID.');
         return;
       }
       
-      const orderRef = doc(firestore, 'orders', tran_id);
+      if (payment_status !== 'COMPLETED') {
+        setStatus('failed');
+        setMessage(`Payment was not successful. Status: ${payment_status || 'UNKNOWN'}`);
+        // Optionally update the order status to 'failed' or 'cancelled' in Firestore
+        const orderRef = doc(firestore, 'orders', transaction_id);
+        const orderDoc = await getDoc(orderRef);
+        if (orderDoc.exists()) {
+            await updateDoc(orderRef, { status: 'failed' });
+        }
+        return;
+      }
+      
+      const orderRef = doc(firestore, 'orders', transaction_id);
       
       try {
+        const verificationResult = await verifyPayment({ transaction_id });
+
+        if (verificationResult.status !== 'COMPLETED') {
+            throw new Error('Payment could not be verified or is not complete.');
+        }
+
         await runTransaction(firestore, async (transaction) => {
           const orderDoc = await transaction.get(orderRef);
           
@@ -46,26 +64,24 @@ function VerificationComponent() {
              return;
           }
 
-          if (pay_status === 'Successful') {
-            const userRef = doc(firestore, 'users', order.userId);
-            const userDoc = await transaction.get(userRef);
-            if (!userDoc.exists()) {
-              throw new Error('User account not found.');
-            }
-            
-            const userData = userDoc.data() as PlayerProfile;
-            const newBalance = (userData.balance || 0) + order.amount;
-
-            transaction.update(userRef, { balance: newBalance });
-            transaction.update(orderRef, { status: 'success' });
-            
-            setStatus('success');
-            setMessage(`Successfully added ${order.amount} TK to your wallet.`);
-          } else {
-            transaction.update(orderRef, { status: 'failed' });
-            setStatus('failed');
-            setMessage(`Payment was not successful. Status: ${pay_status}`);
+          if (parseFloat(verificationResult.amount) !== order.amount) {
+              throw new Error('Paid amount does not match order amount.');
           }
+          
+          const userRef = doc(firestore, 'users', order.userId);
+          const userDoc = await transaction.get(userRef);
+          if (!userDoc.exists()) {
+            throw new Error('User account not found.');
+          }
+          
+          const userData = userDoc.data() as PlayerProfile;
+          const newBalance = (userData.balance || 0) + order.amount;
+
+          transaction.update(userRef, { balance: newBalance });
+          transaction.update(orderRef, { status: 'success' });
+          
+          setStatus('success');
+          setMessage(`Successfully added ${order.amount} TK to your wallet.`);
         });
       } catch (error: any) {
         setStatus('failed');
@@ -114,4 +130,3 @@ export default function VerifyPaymentPage() {
       </Suspense>
     )
 }
-

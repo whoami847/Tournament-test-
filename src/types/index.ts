@@ -1,5 +1,4 @@
 
-
 import type { Timestamp } from 'firebase/firestore';
 
 export type Game = string;
@@ -244,4 +243,19 @@ export interface TopupRequest {
   transactionId: string;
   status: 'pending' | 'approved' | 'rejected';
   requestedAt: Timestamp | string;
+}
+
+
+// --- Gateway Settings ---
+
+export interface RupantorPaySettings {
+  apiKey: string;
+  apiBaseUrl: string;
+  successUrl: string;
+  cancelUrl: string;
+  webhookUrl?: string;
+}
+
+export interface GatewaySettings {
+  rupantorPay: RupantorPaySettings;
 }
