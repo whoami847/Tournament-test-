@@ -21,6 +21,9 @@ import type { Tournament, Team, Match, Round, TeamType, PlayerProfile } from '@/
 import { toIsoString, toTimestamp } from './utils';
 
 const tournamentsCollection = collection(firestore, 'tournaments');
+const usersCollection = collection(firestore, 'users');
+const transactionsCollection = collection(firestore, 'transactions');
+
 
 const getTeamType = (format: string = ''): TeamType => {
   const type = format.split('_')[1]?.toUpperCase() || 'SQUAD';
@@ -35,7 +38,14 @@ const generateBracketStructure = (maxTeams: number, tournamentId: string): Round
     let currentTeams = bracketSize;
     while (currentTeams >= 2) {
         const roundName = roundNamesMap[currentTeams] || `Round of ${currentTeams}`;
-        const numMatches = currentTeams / 2;
+        let numMatches = currentTeams / 2;
+        
+        // Adjust for non-power-of-2 teams in the first round
+        if (currentTeams === bracketSize) {
+          const byes = bracketSize - maxTeams;
+          numMatches = maxTeams - byes;
+        }
+
         const matches: Match[] = Array.from({ length: numMatches }, (_, i) => ({
             id: `${tournamentId}_${roundName.replace(/\s+/g, '-')}_m${i + 1}`,
             name: `${roundName} #${i + 1}`,
@@ -120,9 +130,45 @@ export const updateTournament = async (id: string, data: Partial<Tournament>) =>
 };
 
 export const deleteTournament = async (id: string) => {
-    const tournamentDoc = doc(firestore, 'tournaments', id);
+    const tournamentDocRef = doc(firestore, 'tournaments', id);
+
     try {
-        await deleteDoc(tournamentDoc);
+        await runTransaction(firestore, async (transaction) => {
+            const tournamentDoc = await transaction.get(tournamentDocRef);
+            if (!tournamentDoc.exists()) throw new Error("Tournament not found.");
+            
+            const tournamentData = tournamentDoc.data() as Tournament;
+
+            if (tournamentData.entryFee > 0 && tournamentData.participants) {
+                for (const participant of tournamentData.participants) {
+                    for (const member of participant.members || []) {
+                        if (member.uid) { // Ensure member is a registered user
+                            const userDocRef = doc(usersCollection, member.uid);
+                            const userDoc = await transaction.get(userDocRef);
+                            if (userDoc.exists()) {
+                                const newBalance = (userDoc.data().balance || 0) + tournamentData.entryFee;
+                                transaction.update(userDocRef, { balance: newBalance });
+
+                                // Create a transaction log for the refund
+                                const transactionLogRef = doc(collection(firestore, 'transactions'));
+                                transaction.set(transactionLogRef, {
+                                    userId: member.uid,
+                                    amount: tournamentData.entryFee,
+                                    type: 'admin_adjustment', // Or a new 'refund' type
+                                    description: `Refund for cancelled tournament: ${tournamentData.name}`,
+                                    date: serverTimestamp(),
+                                    status: 'COMPLETED'
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Finally, delete the tournament
+            transaction.delete(tournamentDocRef);
+        });
+
         return { success: true };
     } catch (error: any) {
         return { success: false, error: error.message };

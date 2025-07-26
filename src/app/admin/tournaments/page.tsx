@@ -270,8 +270,12 @@ export default function AdminTournamentsPage() {
                                                             </DropdownMenuItem>
                                                         )}
                                                         
-                                                        <DropdownMenuSeparator />
-                                                        <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={(e) => {e.stopPropagation(); setTournamentToDelete(tournament)}}>Delete</DropdownMenuItem>
+                                                        {tournament.status !== 'live' && (
+                                                            <>
+                                                                <DropdownMenuSeparator />
+                                                                <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={(e) => {e.stopPropagation(); setTournamentToDelete(tournament)}}>Delete</DropdownMenuItem>
+                                                            </>
+                                                        )}
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
                                             </TableCell>
@@ -347,7 +351,9 @@ export default function AdminTournamentsPage() {
                                                 </Button>
                                             )}
                                             
-                                            <Button size="sm" variant="destructive" className="ml-auto" onClick={(e) => {e.stopPropagation(); setTournamentToDelete(tournament)}}>Delete</Button>
+                                            {tournament.status !== 'live' && (
+                                              <Button size="sm" variant="destructive" className="ml-auto" onClick={(e) => {e.stopPropagation(); setTournamentToDelete(tournament)}}>Delete</Button>
+                                            )}
                                         </CardFooter>
                                     </Card>
                             )}) : (
@@ -366,7 +372,7 @@ export default function AdminTournamentsPage() {
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete the tournament "{tournamentToDelete?.name}" and all of its associated data.
+                            This action cannot be undone. This will permanently delete the tournament "{tournamentToDelete?.name}" and all of its associated data. Player entry fees will be refunded.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
