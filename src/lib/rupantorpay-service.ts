@@ -44,7 +44,7 @@ export async function initiatePayment(payload: PaymentPayload): Promise<string |
         
         const data = await response.json();
 
-        if (data.status === 1 && data.payment_url) {
+        if (response.ok && data.status === 1 && data.payment_url) {
             return data.payment_url;
         } else {
             console.error('RupantorPay Error:', data.message || 'Unknown error');
@@ -78,7 +78,7 @@ export async function verifyPayment(payload: VerificationPayload) {
 
         const data = await response.json();
 
-        if (data.status === false) {
+        if (!response.ok || data.status === false) {
              throw new Error(data.message || 'Payment verification failed.');
         }
         
