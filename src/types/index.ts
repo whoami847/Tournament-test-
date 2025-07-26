@@ -119,6 +119,15 @@ export interface Transaction {
   gatewayTransactionId?: string;
 }
 
+export interface Order {
+    id?: string;
+    userId: string;
+    amount: number;
+    status: 'pending' | 'success' | 'failed' | 'cancelled';
+    tran_id: string;
+    createdAt?: Timestamp;
+}
+
 export interface MatchResult {
   id: string;
   tournamentId: string;

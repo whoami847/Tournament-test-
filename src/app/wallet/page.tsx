@@ -25,9 +25,9 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { getUserProfileStream } from "@/lib/users-service";
-import type { PlayerProfile, Transaction, WithdrawMethod, TopupMethod } from "@/types";
+import type { PlayerProfile, Transaction, WithdrawMethod, TopupMethod, Order } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getTransactionsStream } from "@/lib/transactions-service";
+import { getTransactionsStream, createOrder } from "@/lib/transactions-service";
 import { createWithdrawalRequest } from '@/lib/withdraw-requests-service';
 import { getActiveWithdrawMethods } from '@/lib/withdraw-methods-service';
 import { getActiveTopupMethods } from '@/lib/topup-settings-service';
@@ -36,6 +36,7 @@ import { format } from 'date-fns';
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { initiatePayment } from '@/lib/aamarpay-service';
 
 // --- SUB-COMPONENTS ---
 
@@ -79,47 +80,46 @@ const CopyToClipboard = ({ text, label }: { text: string; label: string }) => {
 const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
     const { toast } = useToast();
     const [isOpen, setIsOpen] = useState(false);
-    const [step, setStep] = useState(1);
+    const [step, setStep] = useState(0); // 0: choice, 1: manual, 2: auto
     const [amount, setAmount] = useState('');
     const [transactionId, setTransactionId] = useState('');
-    const [selectedMethod, setSelectedMethod] = useState<TopupMethod | null>(null);
-    const [methods, setMethods] = useState<TopupMethod[]>([]);
-    const [loadingMethods, setLoadingMethods] = useState(true);
+    const [selectedManualMethod, setSelectedManualMethod] = useState<TopupMethod | null>(null);
+    const [manualMethods, setManualMethods] = useState<TopupMethod[]>([]);
+    const [loadingManualMethods, setLoadingManualMethods] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isAutoSubmitting, setIsAutoSubmitting] = useState(false);
 
-    const fetchMethods = useCallback(async () => {
-        setLoadingMethods(true);
+
+    const fetchManualMethods = useCallback(async () => {
+        setLoadingManualMethods(true);
         try {
             const data = await getActiveTopupMethods();
-            setMethods(data);
+            setManualMethods(data);
         } catch (error) {
             toast({ title: "Error", description: "Could not fetch top-up methods.", variant: "destructive" });
         } finally {
-            setLoadingMethods(false);
+            setLoadingManualMethods(false);
         }
     }, [toast]);
 
     const handleOpenChange = (open: boolean) => {
         setIsOpen(open);
-        if (open) {
-            fetchMethods();
-        }
         if (!open) {
             // Reset state on close
-            setStep(1);
+            setStep(0);
             setAmount('');
             setTransactionId('');
-            setSelectedMethod(null);
+            setSelectedManualMethod(null);
         }
     };
     
-    const handleMethodSelect = (method: TopupMethod) => {
-        setSelectedMethod(method);
-        setStep(2);
+    const handleManualMethodSelect = (method: TopupMethod) => {
+        setSelectedManualMethod(method);
+        setStep(1); // Manual deposit form
     }
     
-    const handleRequestSubmit = async () => {
-        if (!selectedMethod || !amount || !transactionId) {
+    const handleManualRequestSubmit = async () => {
+        if (!selectedManualMethod || !amount || !transactionId) {
             toast({ title: "Missing Information", description: "Please provide all required details.", variant: "destructive" });
             return;
         }
@@ -130,7 +130,7 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
             userName: profile.name,
             userGamerId: profile.gamerId,
             amount: parseFloat(amount),
-            method: selectedMethod.name,
+            method: selectedManualMethod.name,
             transactionId: transactionId,
         };
         const result = await createTopupRequest(requestData);
@@ -142,6 +142,134 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
             toast({ title: "Error", description: result.error, variant: "destructive" });
         }
         setIsSubmitting(false);
+    }
+    
+    const handleAutoPayment = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!amount || parseFloat(amount) <= 0) {
+            toast({ title: "Invalid Amount", description: "Please enter a valid amount.", variant: "destructive" });
+            return;
+        }
+        
+        setIsAutoSubmitting(true);
+        const tran_id = `TOUR-${profile.id.slice(0, 5)}-${Date.now()}`;
+        const orderData: Omit<Order, 'id'> = {
+            userId: profile.id,
+            amount: parseFloat(amount),
+            status: 'pending',
+            tran_id: tran_id,
+        };
+
+        try {
+            // Create order in Firestore first
+            await createOrder(orderData);
+
+            // Then initiate payment
+            const paymentUrl = await initiatePayment({
+                amount: parseFloat(amount),
+                tran_id: tran_id,
+                cus_name: profile.name,
+                cus_email: profile.email,
+                cus_phone: '01234567890', // Placeholder or fetch from profile
+                cus_add1: 'N/A', // Placeholder
+                cus_city: 'N/A', // Placeholder
+                cus_country: 'Bangladesh', // Placeholder
+                desc: `Tournament App Top-up for ${profile.name}`,
+            });
+
+            if (paymentUrl) {
+                window.location.href = paymentUrl; // Redirect to payment gateway
+            } else {
+                throw new Error("Could not get payment URL.");
+            }
+
+        } catch (error: any) {
+            toast({ title: "Payment Error", description: error.message, variant: "destructive" });
+            setIsAutoSubmitting(false);
+        }
+    };
+
+
+    const renderStepContent = () => {
+        switch (step) {
+            case 0: // Choice
+                return (
+                    <div className="grid grid-cols-2 gap-4 py-4">
+                        <button onClick={() => { setStep(1); fetchManualMethods(); }} className="flex flex-col items-center justify-center gap-2 rounded-md border p-4 text-center hover:bg-accent hover:border-primary">
+                            <Landmark className="h-10 w-10 text-primary" />
+                            <p className="font-semibold">Manual Deposit</p>
+                        </button>
+                        <button onClick={() => setStep(2)} className="flex flex-col items-center justify-center gap-2 rounded-md border p-4 text-center hover:bg-accent hover:border-primary">
+                            <CreditCard className="h-10 w-10 text-primary" />
+                            <p className="font-semibold">Automatic Deposit</p>
+                        </button>
+                    </div>
+                );
+            case 1: // Manual Deposit Flow
+                return selectedManualMethod ? ( // Manual form
+                    <div className="space-y-4 py-4">
+                        <Button variant="link" onClick={() => { setSelectedManualMethod(null); setStep(0); }} className="p-0 h-auto text-sm">&larr; Back to methods</Button>
+                        <Alert>
+                            <AlertTitle>{selectedManualMethod.name} Instructions</AlertTitle>
+                            <AlertDescription className="space-y-2">
+                                {selectedManualMethod.accountNumber && (
+                                    <CopyToClipboard text={selectedManualMethod.accountNumber} label="Account Number" />
+                                )}
+                                <p className="whitespace-pre-wrap pt-2 border-t">{selectedManualMethod.instructions}</p>
+                            </AlertDescription>
+                        </Alert>
+                         <div className="space-y-2">
+                            <Label htmlFor="amount">Amount (TK)</Label>
+                            <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="e.g., 500" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="transactionId">Transaction ID</Label>
+                            <Input id="transactionId" value={transactionId} onChange={(e) => setTransactionId(e.target.value)} placeholder="Enter the transaction ID" />
+                        </div>
+                    </div>
+                ) : ( // Manual method selection
+                     <div className="space-y-4 py-4">
+                         <Button variant="link" onClick={() => setStep(0)} className="p-0 h-auto text-sm">&larr; Back</Button>
+                        {loadingManualMethods ? <Loader2 className="mx-auto h-6 w-6 animate-spin" /> : manualMethods.length > 0 ? (
+                            <div className="grid grid-cols-2 gap-4">
+                                {manualMethods.map(method => (
+                                    <button key={method.id} onClick={() => handleManualMethodSelect(method)} className="flex flex-col items-center justify-center gap-2 rounded-md border p-4 text-center hover:bg-accent hover:border-primary">
+                                        <Avatar className="h-12 w-12"><AvatarImage src={method.image} /><AvatarFallback>{method.name.charAt(0)}</AvatarFallback></Avatar>
+                                        <p className="font-semibold text-sm">{method.name}</p>
+                                    </button>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-center text-muted-foreground">No active manual methods available.</p>
+                        )}
+                    </div>
+                );
+             case 2: // Auto Deposit
+                return (
+                     <form onSubmit={handleAutoPayment} className="space-y-4 py-4">
+                        <Button variant="link" onClick={() => setStep(0)} className="p-0 h-auto text-sm">&larr; Back</Button>
+                        <Alert>
+                           <CreditCard className="h-4 w-4" />
+                           <AlertTitle>Pay with AamarPay</AlertTitle>
+                           <AlertDescription>
+                             You will be redirected to the secure AamarPay gateway to complete your payment.
+                           </AlertDescription>
+                        </Alert>
+                        <div className="space-y-2">
+                            <Label htmlFor="auto-amount">Amount (TK)</Label>
+                            <Input id="auto-amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="Enter amount to top-up" />
+                        </div>
+                        <DialogFooter>
+                           <DialogClose asChild><Button type="button" variant="outline">Cancel</Button></DialogClose>
+                           <Button type="submit" disabled={isAutoSubmitting}>
+                                {isAutoSubmitting ? <Loader2 className="animate-spin" /> : "Proceed to Payment"}
+                           </Button>
+                        </DialogFooter>
+                    </form>
+                );
+            default:
+                return null;
+        }
     }
 
     return (
@@ -155,55 +283,20 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
                 <DialogHeader>
                     <DialogTitle>Add Money to Wallet</DialogTitle>
                     <DialogDescription>
-                        {step === 1 ? "Select a method to add funds to your wallet." : "Follow the instructions and submit your request."}
+                        {step === 0 && "Choose your preferred deposit method."}
+                        {step === 1 && (selectedManualMethod ? "Follow instructions and submit request." : "Select a manual method.")}
+                        {step === 2 && "Enter amount for automatic payment."}
                     </DialogDescription>
                 </DialogHeader>
-                {step === 1 && (
-                     <div className="space-y-4 py-4">
-                        {loadingMethods ? <Loader2 className="mx-auto h-6 w-6 animate-spin" /> : methods.length > 0 ? (
-                            <div className="grid grid-cols-2 gap-4">
-                                {methods.map(method => (
-                                    <button key={method.id} onClick={() => handleMethodSelect(method)} className="flex flex-col items-center justify-center gap-2 rounded-md border p-4 text-center hover:bg-accent hover:border-primary">
-                                        <Avatar className="h-12 w-12"><AvatarImage src={method.image} /><AvatarFallback>{method.name.charAt(0)}</AvatarFallback></Avatar>
-                                        <p className="font-semibold text-sm">{method.name}</p>
-                                    </button>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-center text-muted-foreground">No active top-up methods available.</p>
-                        )}
-                    </div>
-                )}
-                 {step === 2 && selectedMethod && (
-                    <div className="space-y-4 py-4">
-                        <Button variant="link" onClick={() => setStep(1)} className="p-0 h-auto text-sm">&larr; Back to methods</Button>
-                        <Alert>
-                            <AlertTitle>{selectedMethod.name} Instructions</AlertTitle>
-                            <AlertDescription className="space-y-2">
-                                {selectedMethod.accountNumber && (
-                                    <CopyToClipboard text={selectedMethod.accountNumber} label="Account Number" />
-                                )}
-                                <p className="whitespace-pre-wrap pt-2 border-t">{selectedMethod.instructions}</p>
-                            </AlertDescription>
-                        </Alert>
-                         <div className="space-y-2">
-                            <Label htmlFor="amount">Amount (TK)</Label>
-                            <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="e.g., 500" />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="transactionId">Transaction ID</Label>
-                            <Input id="transactionId" value={transactionId} onChange={(e) => setTransactionId(e.target.value)} placeholder="Enter the transaction ID from your payment" />
-                        </div>
-                    </div>
-                )}
-                <DialogFooter>
-                    <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-                    {step === 2 && (
-                        <Button onClick={handleRequestSubmit} disabled={isSubmitting}>
+                {renderStepContent()}
+                {step === 1 && selectedManualMethod && (
+                    <DialogFooter>
+                        <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+                        <Button onClick={handleManualRequestSubmit} disabled={isSubmitting}>
                             {isSubmitting ? <Loader2 className="animate-spin" /> : "Submit Request"}
                         </Button>
-                    )}
-                </DialogFooter>
+                    </DialogFooter>
+                )}
             </DialogContent>
         </Dialog>
     )
