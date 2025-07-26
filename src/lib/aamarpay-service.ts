@@ -62,7 +62,7 @@ export async function initiatePayment(payload: PaymentPayload): Promise<string |
     }
 }
 
-export function verifyPaymentSignature(data: any): boolean {
+export async function verifyPaymentSignature(data: any): Promise<boolean> {
     const { mer_txnid, amount, pay_status, mer_signature_key } = data;
     const stringToHash = `${mer_txnid}${amount}${pay_status}${AAMARPAY_SIGNATURE_KEY}`;
     const generatedSignature = crypto.createHash('md5').update(stringToHash).digest('hex');
