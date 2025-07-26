@@ -37,7 +37,7 @@ export async function initiatePayment(payload: PaymentPayload): Promise<string |
             headers: {
                 'Content-Type': 'application/json',
                 'X-API-KEY': apiKey,
-                'X-CLIENT': 'esports-hq-app',
+                'X-CLIENT': 'Aff tour',
             },
             body: JSON.stringify(requestBody),
         });
@@ -71,6 +71,7 @@ export async function verifyPayment(payload: VerificationPayload) {
             headers: {
                 'Content-Type': 'application/json',
                 'X-API-KEY': apiKey,
+                'X-CLIENT': 'Aff tour',
             },
             body: JSON.stringify(payload),
         });
@@ -88,3 +89,4 @@ export async function verifyPayment(payload: VerificationPayload) {
         throw error;
     }
 }
+
