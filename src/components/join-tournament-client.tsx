@@ -97,6 +97,87 @@ const JoinPageSkeleton = () => (
     </div>
 );
 
+// --- Sub-component for each player input slot ---
+const PlayerSlot = ({
+    index,
+    form,
+    team,
+    profile,
+}: {
+    index: number;
+    form: any;
+    team: UserTeam | null;
+    profile: PlayerProfile | null;
+}) => {
+    const isLeaderSlot = index === 0;
+    const [popoverOpen, setPopoverOpen] = useState(false);
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+            <FormField
+                control={form.control}
+                name={`players.${index}.name`}
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Gamer Name</FormLabel>
+                        <FormControl>
+                            <Input placeholder="Enter in-game name" {...field} disabled={isLeaderSlot} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name={`players.${index}.id`}
+                render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                        <FormLabel>Gamer ID</FormLabel>
+                        <div className="flex gap-2">
+                            <FormControl>
+                                <Input placeholder="Enter in-game ID" {...field} disabled={isLeaderSlot} />
+                            </FormControl>
+                            {!isLeaderSlot && team && team.members.length > 1 && (
+                                <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" type="button">Select Player</Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[200px] p-0">
+                                        <Command>
+                                            <CommandInput placeholder="Search player..." />
+                                            <CommandEmpty>No player found.</CommandEmpty>
+                                            <CommandGroup>
+                                                {team.members
+                                                    .filter(m => m.uid !== profile?.id)
+                                                    .map((member) => (
+                                                        <CommandItem
+                                                            key={member.gamerId}
+                                                            value={member.name}
+                                                            onSelect={() => {
+                                                                form.setValue(`players.${index}.name`, member.name);
+                                                                form.setValue(`players.${index}.id`, member.gamerId);
+                                                                form.setValue(`players.${index}.uid`, member.uid);
+                                                                form.trigger([`players.${index}.name`, `players.${index}.id`]);
+                                                                setPopoverOpen(false);
+                                                            }}
+                                                        >
+                                                            {member.name}
+                                                        </CommandItem>
+                                                    ))}
+                                            </CommandGroup>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
+                            )}
+                        </div>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
+    );
+};
+
 
 export default function JoinTournamentClient() {
     const params = useParams<{ id: string }>();
@@ -224,64 +305,6 @@ export default function JoinTournamentClient() {
         setIsSubmitting(false);
     }
 
-    const renderPlayerSlot = (index: number) => {
-        const isLeaderSlot = index === 0;
-        const [popoverOpen, setPopoverOpen] = useState(false);
-
-        return (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-                <FormField control={form.control} name={`players.${index}.name`} render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Gamer Name</FormLabel>
-                        <FormControl><Input placeholder="Enter in-game name" {...field} disabled={isLeaderSlot} /></FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )} />
-                <FormField control={form.control} name={`players.${index}.id`} render={({ field }) => (
-                     <FormItem className="flex flex-col">
-                        <FormLabel>Gamer ID</FormLabel>
-                        <div className="flex gap-2">
-                            <FormControl><Input placeholder="Enter in-game ID" {...field} disabled={isLeaderSlot} /></FormControl>
-                            {!isLeaderSlot && team && team.members.length > 1 && (
-                                <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                                    <PopoverTrigger asChild>
-                                        <Button variant="outline" type="button">Select Player</Button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-[200px] p-0">
-                                    <Command>
-                                        <CommandInput placeholder="Search player..." />
-                                        <CommandEmpty>No player found.</CommandEmpty>
-                                        <CommandGroup>
-                                        {team.members
-                                            .filter(m => m.uid !== profile?.id)
-                                            .map((member) => (
-                                            <CommandItem
-                                                key={member.gamerId}
-                                                value={member.name}
-                                                onSelect={() => {
-                                                    form.setValue(`players.${index}.name`, member.name);
-                                                    form.setValue(`players.${index}.id`, member.gamerId);
-                                                    form.setValue(`players.${index}.uid`, member.uid);
-                                                    form.trigger([`players.${index}.name`, `players.${index}.id`]);
-                                                    setPopoverOpen(false);
-                                                }}
-                                            >
-                                                {member.name}
-                                            </CommandItem>
-                                        ))}
-                                        </CommandGroup>
-                                    </Command>
-                                    </PopoverContent>
-                                </Popover>
-                            )}
-                        </div>
-                        <FormMessage />
-                    </FormItem>
-                )} />
-            </div>
-        )
-    }
-
     const joinOptions = useMemo(() => {
         if (!tournament) return [];
         const formatType = tournament.format.split('_')[1]?.toUpperCase() || 'SQUAD';
@@ -372,7 +395,12 @@ export default function JoinTournamentClient() {
                                 {fields.map((field, index) => (
                                     <div key={field.id} className="p-4 border rounded-lg bg-background shadow-sm relative">
                                         <span className="absolute -top-3 left-4 bg-background px-1 text-sm text-muted-foreground">{index === 0 ? 'You (Player 1)' : `Player ${index + 1}`}</span>
-                                        {renderPlayerSlot(index)}
+                                        <PlayerSlot
+                                            index={index}
+                                            form={form}
+                                            team={team}
+                                            profile={profile}
+                                        />
                                     </div>
                                 ))}
                             </div>
