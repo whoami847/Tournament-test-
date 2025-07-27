@@ -229,7 +229,7 @@ export default function TournamentDetailsClient({ initialTournament }: { initial
         </div>
       </div>
 
-      <div className="container mx-auto px-4 -mt-10 relative z-20">
+      <div className="container mx-auto px-4 -mt-4 relative z-20">
         <Tabs defaultValue="info" className="w-full">
             <TabsList className="flex w-full justify-center gap-2 bg-transparent p-1 h-auto">
               <TabsTrigger value="info" className="rounded-full bg-background/20 backdrop-blur-sm text-white data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Info</TabsTrigger>
