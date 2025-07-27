@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Award, KeyRound, Trophy, Users, Ticket, Map as MapIcon, Smartphone, ClipboardCheck, Copy } from 'lucide-react';
+import { Award, KeyRound, Trophy, Users, Ticket, Map as MapIcon, Smartphone, ClipboardCheck, Copy, ArrowLeft } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Progress } from '@/components/ui/progress';
@@ -205,14 +205,18 @@ export default function TournamentDetailsClient({ initialTournament }: { initial
     <div className="container mx-auto px-4 py-8 md:pb-8 pb-24">
       <div className="space-y-8">
          <div className="relative w-full h-80 md:h-96 rounded-2xl overflow-hidden">
+            <Button variant="outline" size="icon" className="absolute top-4 left-4 z-20" onClick={() => router.back()}>
+                <ArrowLeft className="h-4 w-4" />
+                <span className="sr-only">Back</span>
+            </Button>
             <Image
                 src={tournament.image}
                 alt={tournament.name}
                 fill
-                className="object-cover fixed top-0 left-0 w-full h-screen -z-10"
+                className="object-cover"
                 data-ai-hint={tournament.dataAiHint as string}
             />
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
             <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white p-4">
                  <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -250,13 +254,13 @@ export default function TournamentDetailsClient({ initialTournament }: { initial
             )}
 
             <Tabs defaultValue="info">
-                <TabsList className="grid w-full grid-cols-3 bg-card rounded-full p-1 h-auto">
+                <TabsList className="grid w-full grid-cols-3 bg-transparent p-1 h-auto">
                   <TabsTrigger value="info" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none">Info</TabsTrigger>
                   <TabsTrigger value="bracket" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none">Bracket</TabsTrigger>
                   <TabsTrigger value="rules" className="rounded-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none">Rules</TabsTrigger>
                 </TabsList>
                 <TabsContent value="info" className="mt-4">
-                  <Card>
+                  <Card className="bg-card/50 backdrop-blur-sm">
                     <CardContent className="p-6">
                       <div className="mb-8">
                           <InfoRow icon={Trophy} label="Total Prize" value={`${tournament.prizePool} TK`} index={0} />
@@ -340,7 +344,7 @@ export default function TournamentDetailsClient({ initialTournament }: { initial
                   </Card>
                 </TabsContent>
                 <TabsContent value="bracket" className="mt-4">
-                    <Card>
+                    <Card className="bg-card/50 backdrop-blur-sm">
                         <CardContent className="text-center py-12">
                              <p className="text-muted-foreground mb-4">The bracket is displayed in a dedicated view for a better experience.</p>
                              <Button asChild size="lg" className="rounded-full">
@@ -350,7 +354,7 @@ export default function TournamentDetailsClient({ initialTournament }: { initial
                     </Card>
                 </TabsContent>
                 <TabsContent value="rules" className="mt-4">
-                    <Card>
+                    <Card className="bg-card/50 backdrop-blur-sm">
                         <CardContent className="prose prose-invert prose-p:text-muted-foreground p-6">
                             <p>{tournament.rules}</p>
                         </CardContent>
