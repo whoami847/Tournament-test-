@@ -89,8 +89,10 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
     const [isAutoSubmitting, setIsAutoSubmitting] = useState(false);
 
     useEffect(() => {
+        // This script is for RupantorPay popup, might need adjustment for NagorikPay if they have one.
+        // For now, we rely on redirection.
         const script = document.createElement('script');
-        script.src = 'https://rupantorpay.com/public/assets/js/checkout.js';
+        script.src = 'https://rupantorpay.com/public/assets/js/checkout.js'; // This might be from a previous integration
         script.async = true;
         document.body.appendChild(script);
 
@@ -165,8 +167,8 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    fullname: profile.name,
-                    email: profile.email,
+                    cus_name: profile.name,
+                    cus_email: profile.email,
                     amount: parseFloat(amount),
                     uid: profile.id,
                     phone: '01234567890' // Placeholder, this should ideally be in profile
@@ -175,8 +177,8 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
 
             const data = await res.json();
             if (res.ok && data.payment_url) {
-                // @ts-ignore - rupantorpayCheckOut is loaded from external script
-                rupantorpayCheckOut(data.payment_url);
+                // Redirect user to the payment gateway
+                window.location.href = data.payment_url;
             } else {
                 throw new Error(data.message || 'Failed to create payment URL.');
             }
@@ -248,9 +250,9 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
                         <Button variant="link" onClick={() => setStep(0)} className="p-0 h-auto text-sm">&larr; Back</Button>
                         <Alert>
                            <CreditCard className="h-4 w-4" />
-                           <AlertTitle>Pay with RupantorPay</AlertTitle>
+                           <AlertTitle>Pay with NagorikPay</AlertTitle>
                            <AlertDescription>
-                             You will be shown a payment popup to complete your payment securely.
+                             You will be redirected to complete your payment securely.
                            </AlertDescription>
                         </Alert>
                         <div className="space-y-2">
