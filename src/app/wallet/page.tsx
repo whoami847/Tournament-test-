@@ -456,74 +456,61 @@ const CardStack = ({ balance, profile }: { balance: number, profile: PlayerProfi
             transition={{ duration: 0.5, delay: 0.1 }}
             className={cn("relative h-60 flex items-center justify-center group")}
         >
-            {/* Bottom Card */}
             <motion.div
                 initial={{ y: 0, rotate: 0 }}
                 animate={{ y: 6, rotate: -6 }}
                 transition={{ type: 'spring', stiffness: 100, damping: 10 }}
                 className={cn(
-                    "absolute w-full max-w-[320px] h-52 rounded-2xl bg-gradient-to-br from-[#4A2E0C] to-[#8C5A2D] p-6 text-white shadow-lg",
+                    "absolute w-full max-w-[320px] h-52 rounded-2xl bg-white/10 dark:bg-black/10 backdrop-blur-sm p-6 text-foreground shadow-lg",
                     'group-hover:-translate-y-2 group-hover:rotate-[-8deg]'
                 )}
                 style={{ zIndex: 10 }}
             >
-                <div className="flex justify-between items-start">
-                    <p className="font-bold tracking-wider">{profile?.name || 'Player'}</p>
-                    <p className="font-bold text-lg italic">Game Card</p>
-                </div>
             </motion.div>
-             {/* Middle Card */}
             <motion.div
                 initial={{ y: 0, rotate: 0 }}
                 animate={{ y: 3, rotate: -3 }}
                 transition={{ type: 'spring', stiffness: 100, damping: 10, delay: 0.05 }}
                 className={cn(
-                    "absolute w-full max-w-[320px] h-52 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 p-6 text-white shadow-lg",
+                    "absolute w-full max-w-[320px] h-52 rounded-2xl bg-white/10 dark:bg-black/10 backdrop-blur-sm p-6 text-foreground shadow-lg",
                     'group-hover:-translate-y-1 group-hover:rotate-[-4deg]'
                 )}
                 style={{ zIndex: 20 }}
             >
-                 <div className="flex justify-between items-start">
-                    <p className="font-bold tracking-wider">{profile?.name || 'Player'}</p>
-                    <p className="font-bold text-lg italic">Game Card</p>
-                </div>
             </motion.div>
-             {/* Top Card */}
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4, delay: 0.1 }}
                 className={cn(
-                    "absolute w-full max-w-[320px] h-52 rounded-2xl bg-black p-6 text-white shadow-2xl flex flex-col justify-between",
+                    "absolute w-full max-w-[320px] h-52 rounded-2xl bg-white/20 dark:bg-black/20 backdrop-blur-sm p-6 text-foreground shadow-2xl flex flex-col justify-between border border-white/20 dark:border-black/20",
                     'group-hover:scale-105 group-hover:-translate-y-6'
                 )}
                 style={{ zIndex: 30 }}
             >
                  <div className="flex justify-between items-start">
                     <div>
-                        <p className="text-xs uppercase text-gray-400">Card Holder Name</p>
-                        <p className="font-medium tracking-wider">{profile?.name || 'Player'}</p>
+                        <p className="text-xs uppercase text-foreground/70">Current Balance</p>
+                        <p className="text-3xl font-bold tracking-tight">
+                            {balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TK
+                        </p>
                     </div>
-                    <p className="font-bold text-lg italic">Game Card</p>
+                    <p className="font-bold text-lg italic text-foreground/80">Game Card</p>
                 </div>
 
-                <div className="mt-auto mb-2">
-                     <div className="flex justify-between items-baseline">
-                        <div>
-                            <p className="text-xs uppercase text-gray-400">Current Balance</p>
-                            <p className="text-3xl font-bold tracking-tight">
-                                {balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TK
+                <div className="flex justify-between items-end">
+                     <div>
+                        <p className="text-xs uppercase text-foreground/70">Card Holder</p>
+                        <p className="font-medium tracking-wider">{profile?.name || 'Player'}</p>
+                    </div>
+                     {(profile?.pendingBalance ?? 0) > 0 && (
+                        <div className="text-right">
+                            <p className="text-xs uppercase text-foreground/70">Pending</p>
+                            <p className="text-lg font-bold tracking-tight text-amber-400">
+                                {profile?.pendingBalance?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TK
                             </p>
                         </div>
-                        {(profile?.pendingBalance ?? 0) > 0 && (
-                            <div className="text-right">
-                                <p className="text-xs uppercase text-gray-400">Pending</p>
-                                <p className="text-lg font-bold tracking-tight text-amber-400">
-                                    {profile?.pendingBalance?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TK
-                                </p>
-                            </div>
-                        )}
-                    </div>
+                    )}
                 </div>
 
                 <div className="flex justify-start gap-4">
@@ -566,65 +553,63 @@ const TransactionList = ({ transactions }: { transactions: Transaction[] }) => {
     };
 
     return (
-        <>
-            <motion.section
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+        >
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Recent Transactions</h2>
+            </div>
+            <motion.div 
+                className="space-y-3"
+                variants={containerVariants}
+                initial="hidden"
+                animate="show"
             >
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold">Recent Transactions</h2>
-                </div>
-                <motion.div 
-                    className="space-y-3"
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="show"
-                >
-                    {transactions.length > 0 ? (
-                        transactions.map((tx) => {
-                            const status = (tx.status || 'COMPLETED').toUpperCase() as keyof typeof statusConfig;
-                            const config = statusConfig[status];
-                            return (
-                                <motion.div key={tx.id} variants={itemVariants}>
-                                    <Card className="bg-card/80 backdrop-blur-sm border-border/50">
-                                        <CardContent className="p-3 flex items-center gap-4">
-                                            {transactionIcons[tx.type] || transactionIcons['fee']}
-                                            <div className="flex-grow">
-                                                <p className="font-semibold">{tx.description}</p>
-                                                <div className="flex items-center gap-2">
-                                                    <p className="text-sm text-muted-foreground">{format(new Date(tx.date as string), "PPP, p")}</p>
-                                                    {config && (
-                                                        <Badge className={cn("text-xs capitalize h-5 px-1.5 gap-1", config.className)}>
-                                                            {config.icon}
-                                                            {config.text}
-                                                        </Badge>
-                                                    )}
-                                                </div>
+                {transactions.length > 0 ? (
+                    transactions.map((tx) => {
+                        const status = (tx.status || 'COMPLETED').toUpperCase() as keyof typeof statusConfig;
+                        const config = statusConfig[status];
+                        return (
+                            <motion.div key={tx.id} variants={itemVariants}>
+                                <Card className="bg-card/80 backdrop-blur-sm border-border/50">
+                                    <CardContent className="p-3 flex items-center gap-4">
+                                        {transactionIcons[tx.type] || transactionIcons['fee']}
+                                        <div className="flex-grow">
+                                            <p className="font-semibold">{tx.description}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm text-muted-foreground">{format(new Date(tx.date as string), "PPP, p")}</p>
+                                                {config && (
+                                                    <Badge className={cn("text-xs capitalize h-5 px-1.5 gap-1", config.className)}>
+                                                        {config.icon}
+                                                        {config.text}
+                                                    </Badge>
+                                                )}
                                             </div>
-                                            <p className={cn(
-                                                "font-bold text-base",
-                                                tx.amount > 0 ? "text-green-400" : "text-foreground"
-                                            )}>
-                                                {tx.amount > 0 ? `+` : ``}{tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TK
-                                            </p>
-                                        </CardContent>
-                                    </Card>
-                                </motion.div>
-                            )
-                        })
-                    ) : (
-                        <motion.div variants={itemVariants}>
-                            <Card className="bg-card/80 backdrop-blur-sm border-border/50">
-                                <CardContent className="p-6 text-center text-muted-foreground">
-                                    You have no recent transactions.
-                                </CardContent>
-                            </Card>
-                        </motion.div>
-                    )}
-                </motion.div>
-            </motion.section>
-        </>
+                                        </div>
+                                        <p className={cn(
+                                            "font-bold text-base",
+                                            tx.amount > 0 ? "text-green-400" : "text-foreground"
+                                        )}>
+                                            {tx.amount > 0 ? `+` : ``}{tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TK
+                                        </p>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        )
+                    })
+                ) : (
+                    <motion.div variants={itemVariants}>
+                        <Card className="bg-card/80 backdrop-blur-sm border-border/50">
+                            <CardContent className="p-6 text-center text-muted-foreground">
+                                You have no recent transactions.
+                            </CardContent>
+                        </Card>
+                    </motion.div>
+                )}
+            </motion.div>
+        </motion.div>
     );
 };
 
@@ -690,3 +675,4 @@ export default function WalletPage() {
         </div>
     );
 }
+
