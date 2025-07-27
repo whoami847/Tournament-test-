@@ -204,29 +204,30 @@ export default function TournamentDetailsClient({ initialTournament }: { initial
     )}
     <div className="container mx-auto px-4 py-8 md:pb-8 pb-24">
       <div className="space-y-8">
-        <motion.header
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          className="relative h-64 md:h-80 rounded-lg overflow-hidden"
-        >
-          <Image
-            src={tournament.image}
-            alt={tournament.name}
-            fill
-            className="object-cover"
-            data-ai-hint={tournament.dataAiHint as string}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-          <div className="absolute bottom-0 left-0 p-6 md:p-8">
-            <Badge variant="secondary" className="mb-2">{tournament.game}</Badge>
-            <h1 className="text-3xl md:text-5xl font-extrabold text-white shadow-lg">{tournament.name}</h1>
-          </div>
-        </motion.header>
+         <div className="relative w-full h-80 md:h-96 rounded-2xl overflow-hidden">
+            <Image
+                src={tournament.image}
+                alt={tournament.name}
+                fill
+                className="object-cover fixed top-0 left-0 w-full h-screen -z-10"
+                data-ai-hint={tournament.dataAiHint as string}
+            />
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            <div className="relative z-10 flex flex-col items-center justify-center h-full text-center text-white p-4">
+                 <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                 >
+                    <Badge variant="secondary" className="mb-4 bg-white/10 text-white border-white/20">{tournament.game}</Badge>
+                    <h1 className="text-4xl md:text-6xl font-extrabold shadow-lg">{tournament.name}</h1>
+                </motion.div>
+            </div>
+        </div>
 
         <motion.div
-            initial={{ opacity: 0, x: -50 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
         >
             {matchesToSubmit.length > 0 && (
