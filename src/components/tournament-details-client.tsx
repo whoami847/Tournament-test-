@@ -331,11 +331,20 @@ export default function TournamentDetailsClient({ initialTournament }: { initial
                 </Card>
             </TabsContent>
             <TabsContent value="rules" className="mt-4">
-                <Card className="bg-card/50 backdrop-blur-sm">
-                    <CardContent className="prose prose-invert prose-p:text-muted-foreground p-6">
-                        <p>{tournament.rules}</p>
-                    </CardContent>
-                </Card>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.1 }}
+                >
+                    <Card className="bg-card/50 backdrop-blur-sm">
+                        <CardHeader>
+                            <CardTitle>Rules & Regulations</CardTitle>
+                        </CardHeader>
+                        <CardContent className="prose prose-invert prose-p:text-muted-foreground p-6 pt-0">
+                            <p className="whitespace-pre-line">{tournament.rules}</p>
+                        </CardContent>
+                    </Card>
+                </motion.div>
             </TabsContent>
         </Tabs>
       </div>
