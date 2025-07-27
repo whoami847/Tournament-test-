@@ -1,4 +1,6 @@
 
+'use client';
+
 import Link from 'next/link';
 import { Card, CardContent } from "@/components/ui/card";
 import { LayoutDashboard, Users, Swords, List, Settings, LucideIcon, Gamepad2, Image as ImageIcon, ClipboardCheck, Award, Banknote, ListChecks, Upload, History, GitBranch } from "lucide-react";
