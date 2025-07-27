@@ -51,12 +51,7 @@ export default function AdminGatewaySettingsPage() {
             setLoading(true);
             const settings = await getGatewaySettings();
             if (settings && settings.rupantorPay) {
-                // Map old apiKey to new accessToken for backward compatibility
-                const mappedSettings = {
-                    ...settings.rupantorPay,
-                    accessToken: settings.rupantorPay.accessToken || (settings.rupantorPay as any).apiKey || '',
-                };
-                form.reset({ rupantorPay: mappedSettings });
+                form.reset({ rupantorPay: settings.rupantorPay });
             }
             setLoading(false);
         };
