@@ -248,7 +248,7 @@ const MatchCard = ({ match, highlightTeam1AsWinner, highlightTeam2AsWinner }: { 
         <div className="p-0">
             <TeamDisplay team={team1} score={score1} isWinner={(isCompleted && winner1) || highlightTeam1AsWinner} isLoser={loser1} />
             <div className="relative border-t border-border/50 mx-2">
-              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-1 text-xs text-muted-foreground">
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-1 text-xs text-amber-400 font-bold">
                 VS
               </span>
             </div>
