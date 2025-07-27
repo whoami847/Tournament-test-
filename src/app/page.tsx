@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from 'next/image';
@@ -138,10 +139,10 @@ const FeaturedEvent = ({ banners }: { banners: FeaturedBanner[] }) => {
                         <Card className="relative w-full h-48 border-none overflow-hidden rounded-2xl">
                             <Image src={event.image} alt={event.name} fill className="object-cover" data-ai-hint={event.dataAiHint} />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                            <CardContent className="absolute bottom-0 left-0 p-4 text-white">
+                            <CardContent className="absolute bottom-0 left-0 p-4 text-primary-foreground">
                                 <p className="text-xs font-bold uppercase tracking-wider">{event.game}</p>
                                 <h3 className="text-2xl font-black">{event.name}</h3>
-                                <p className="text-xs text-white/80">{event.date}</p>
+                                <p className="text-xs text-primary-foreground/80">{event.date}</p>
                             </CardContent>
                             <Button size="icon" className="absolute bottom-4 right-4 rounded-full bg-primary/80 backdrop-blur-sm h-12 w-12 border-2 border-primary/50"><ChevronRight className="h-6 w-6" /></Button>
                         </Card>
@@ -162,10 +163,10 @@ const LiveEvents = ({tournaments}: {tournaments: Tournament[]}) => (
                           <Card className="relative h-48 border-none overflow-hidden rounded-xl">
                               <Image src={event.image} alt={event.name} fill className="object-cover" data-ai-hint={event.dataAiHint} />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                              <CardContent className="absolute bottom-0 left-0 p-3 text-white w-full">
+                              <CardContent className="absolute bottom-0 left-0 p-3 text-primary-foreground w-full">
                                   <Badge className="mb-1 bg-red-500 text-white border-none font-bold animate-pulse">Live</Badge>
                                   <h4 className="font-bold truncate">{event.name}</h4>
-                                  <p className="text-xs text-white/70">{format(new Date(event.startDate as string), "dd.MM.yy '•' HH:mm")}</p>
+                                  <p className="text-xs text-primary-foreground/70">{format(new Date(event.startDate as string), "dd.MM.yy '•' HH:mm")}</p>
                               </CardContent>
                               <Badge variant="secondary" className="absolute top-2 right-2 text-xs">{event.game}</Badge>
                           </Card>
@@ -186,9 +187,9 @@ const GamesList = ({ games }: { games: GameCategory[] }) => (
                     <Card className="relative h-28 border-none overflow-hidden rounded-xl">
                         <Image src={game.image} alt={game.name} fill className="object-cover" data-ai-hint={game.dataAiHint}/>
                         <div className="absolute inset-0 bg-black/50" />
-                        <CardContent className="absolute bottom-0 left-0 p-3 text-white">
+                        <CardContent className="absolute bottom-0 left-0 p-3 text-primary-foreground">
                             <h4 className="font-bold">{game.name}</h4>
-                            <p className="text-xs text-white/70">{game.categories}</p>
+                            <p className="text-xs text-primary-foreground/70">{game.categories}</p>
                         </CardContent>
                     </Card>
                 </CarouselItem>

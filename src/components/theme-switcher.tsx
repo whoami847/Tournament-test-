@@ -25,7 +25,7 @@ export function ThemeSwitcher() {
     <Button
       variant="ghost"
       size="icon"
-      className="bg-black/20 hover:bg-black/40 text-white hover:text-white rounded-full"
+      className="bg-black/20 hover:bg-black/40 text-primary-foreground hover:text-primary-foreground rounded-full"
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
     >

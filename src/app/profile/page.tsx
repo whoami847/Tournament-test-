@@ -550,7 +550,7 @@ const MatchCard = ({ match, tournament, userTeam }: { match: Match, tournament: 
         } else if (scores[1] > scores[0]) {
             result = !isUserTeam1 ? 'Victory' : 'Defeat';
         } else {
-            result = 'Draw';
+             result = 'Draw';
         }
     }
 
@@ -731,7 +731,7 @@ export default function ProfilePage() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
                 <div className="absolute top-4 right-4 left-4 z-10 flex items-center justify-between">
-                    <h1 className="text-xl font-bold text-white">Profile</h1>
+                    <h1 className="text-xl font-bold text-primary-foreground">Profile</h1>
                     <div className="flex items-center gap-2">
                         <ThemeSwitcher />
                         <DropdownMenu>
