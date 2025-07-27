@@ -293,7 +293,7 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
     return (
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
-                <Button className="bg-white/20 hover:bg-white/30 text-primary-foreground font-bold text-xs h-8 px-3 backdrop-blur-sm rounded-md">
+                <Button className="bg-card/80 dark:bg-black/20 hover:bg-card dark:hover:bg-black/40 text-foreground font-bold text-xs h-8 px-3 backdrop-blur-sm rounded-md border border-border/50">
                     <ArrowUp className="mr-2 h-4 w-4" /> Add Money
                 </Button>
             </DialogTrigger>
@@ -388,7 +388,7 @@ const WithdrawDialog = ({ profile }: { profile: PlayerProfile }) => {
     return (
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
-                <Button className="bg-white/20 hover:bg-white/30 text-primary-foreground font-bold text-xs h-8 px-3 backdrop-blur-sm rounded-md">
+                <Button className="bg-card/80 dark:bg-black/20 hover:bg-card dark:hover:bg-black/40 text-foreground font-bold text-xs h-8 px-3 backdrop-blur-sm rounded-md border border-border/50">
                     <ArrowDown className="mr-2 h-4 w-4" /> Withdraw
                 </Button>
             </DialogTrigger>
@@ -483,30 +483,30 @@ const CardStack = ({ balance, profile }: { balance: number, profile: PlayerProfi
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.4, delay: 0.1 }}
                 className={cn(
-                    "absolute w-full max-w-[320px] h-52 rounded-2xl bg-white/20 dark:bg-black/20 backdrop-blur-sm p-6 text-primary-foreground shadow-2xl flex flex-col justify-between border border-white/20 dark:border-black/20",
+                    "absolute w-full max-w-[320px] h-52 rounded-2xl bg-card/80 dark:bg-black/20 backdrop-blur-sm p-6 text-card-foreground shadow-2xl flex flex-col justify-between border border-border/20 dark:border-black/20",
                     'group-hover:scale-105 group-hover:-translate-y-6'
                 )}
                 style={{ zIndex: 30 }}
             >
                  <div className="flex justify-between items-start">
                     <div>
-                        <p className="text-xs uppercase text-primary-foreground/70">Current Balance</p>
+                        <p className="text-xs uppercase text-muted-foreground">Current Balance</p>
                         <p className="text-3xl font-bold tracking-tight">
                             {balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TK
                         </p>
                     </div>
-                    <p className="font-bold text-lg italic text-primary-foreground/80">Game Card</p>
+                    <p className="font-bold text-lg italic text-muted-foreground">Game Card</p>
                 </div>
 
                 <div className="flex justify-between items-end">
                      <div>
-                        <p className="text-xs uppercase text-primary-foreground/70">Card Holder</p>
+                        <p className="text-xs uppercase text-muted-foreground">Card Holder</p>
                         <p className="font-medium tracking-wider">{profile?.name || 'Player'}</p>
                     </div>
                      {(profile?.pendingBalance ?? 0) > 0 && (
                         <div className="text-right">
-                            <p className="text-xs uppercase text-primary-foreground/70">Pending</p>
-                            <p className="text-lg font-bold tracking-tight text-amber-400">
+                            <p className="text-xs uppercase text-primary">Pending</p>
+                            <p className="text-lg font-bold tracking-tight text-primary">
                                 {profile?.pendingBalance?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TK
                             </p>
                         </div>
@@ -553,6 +553,7 @@ const TransactionList = ({ transactions }: { transactions: Transaction[] }) => {
     };
 
     return (
+        <div>
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -610,6 +611,7 @@ const TransactionList = ({ transactions }: { transactions: Transaction[] }) => {
                 )}
             </motion.div>
         </motion.div>
+        </div>
     );
 };
 

@@ -223,8 +223,8 @@ export default function TournamentDetailsClient({ initialTournament }: { initial
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
             >
-                <Badge variant="secondary" className="mb-2 bg-background/20 text-primary-foreground border-border/20 backdrop-blur-sm">{tournament.game}</Badge>
-                <h1 className="text-4xl md:text-5xl font-extrabold shadow-lg text-primary-foreground">{tournament.name}</h1>
+                <Badge variant="secondary" className="mb-2 bg-background/20 text-foreground border-border/20 backdrop-blur-sm">{tournament.game}</Badge>
+                <h1 className="text-4xl md:text-5xl font-extrabold shadow-lg text-foreground">{tournament.name}</h1>
             </motion.div>
         </div>
       </div>
@@ -232,9 +232,9 @@ export default function TournamentDetailsClient({ initialTournament }: { initial
       <div className="container mx-auto px-4 -mt-4 relative z-20">
         <Tabs defaultValue="info" className="w-full">
             <TabsList className="flex w-full justify-center gap-2 bg-transparent p-1 h-auto">
-              <TabsTrigger value="info" className="rounded-full bg-background/20 backdrop-blur-sm text-primary-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Info</TabsTrigger>
-              <TabsTrigger value="bracket" className="rounded-full bg-background/20 backdrop-blur-sm text-primary-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Bracket</TabsTrigger>
-              <TabsTrigger value="rules" className="rounded-full bg-background/20 backdrop-blur-sm text-primary-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Rules</TabsTrigger>
+              <TabsTrigger value="info" className="rounded-full bg-background/20 backdrop-blur-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Info</TabsTrigger>
+              <TabsTrigger value="bracket" className="rounded-full bg-background/20 backdrop-blur-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Bracket</TabsTrigger>
+              <TabsTrigger value="rules" className="rounded-full bg-background/20 backdrop-blur-sm text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Rules</TabsTrigger>
             </TabsList>
             <TabsContent value="info" className="mt-4">
               <Card className="bg-card/50 backdrop-blur-sm">
