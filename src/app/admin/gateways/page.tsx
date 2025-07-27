@@ -14,16 +14,15 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-const rupantorPaySchema = z.object({
-    accessToken: z.string().min(1, 'Access Token (API Key) is required.'),
+const nagorikPaySchema = z.object({
+    accessToken: z.string().min(1, 'API Key is required.'),
     successUrl: z.string().url('Invalid URL.').min(1, 'Success URL is required.'),
     cancelUrl: z.string().url('Invalid URL.').min(1, 'Cancel URL is required.'),
-    failUrl: z.string().url('Invalid URL.').min(1, 'Fail URL is required.'),
     webhookUrl: z.string().optional(),
 });
 
 const formSchema = z.object({
-  rupantorPay: rupantorPaySchema,
+  nagorikPay: nagorikPaySchema,
 });
 
 type GatewaySettingsFormValues = z.infer<typeof formSchema>;
@@ -36,12 +35,11 @@ export default function AdminGatewaySettingsPage() {
     const form = useForm<GatewaySettingsFormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            rupantorPay: {
+            nagorikPay: {
                 accessToken: '',
-                successUrl: `${process.env.NEXT_PUBLIC_APP_URL}/payment/verify`,
-                cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL}/payment/verify`,
-                failUrl: `${process.env.NEXT_PUBLIC_APP_URL}/payment/verify`,
-                webhookUrl: '',
+                successUrl: `${process.env.NEXT_PUBLIC_APP_URL || ''}/payment/verify`,
+                cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL || ''}/payment/verify`,
+                webhookUrl: `${process.env.NEXT_PUBLIC_APP_URL || ''}/api/webhook`,
             },
         },
     });
@@ -50,8 +48,8 @@ export default function AdminGatewaySettingsPage() {
         const fetchSettings = async () => {
             setLoading(true);
             const settings = await getGatewaySettings();
-            if (settings && settings.rupantorPay) {
-                form.reset({ rupantorPay: settings.rupantorPay });
+            if (settings && settings.nagorikPay) {
+                form.reset({ nagorikPay: settings.nagorikPay });
             }
             setLoading(false);
         };
@@ -89,26 +87,26 @@ export default function AdminGatewaySettingsPage() {
             <CardContent>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                        <Tabs defaultValue="rupantorpay" className="w-full">
+                        <Tabs defaultValue="nagorikpay" className="w-full">
                             <TabsList>
-                                <TabsTrigger value="rupantorpay">RupantorPay</TabsTrigger>
+                                <TabsTrigger value="nagorikpay">NagorikPay</TabsTrigger>
                             </TabsList>
-                            <TabsContent value="rupantorpay" className="pt-6">
+                            <TabsContent value="nagorikpay" className="pt-6">
                                 <div className="space-y-4">
                                     <FormField
                                         control={form.control}
-                                        name="rupantorPay.accessToken"
+                                        name="nagorikPay.accessToken"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Access Token (API Key)</FormLabel>
-                                                <FormControl><Input placeholder="Enter your RupantorPay Access Token" {...field} /></FormControl>
+                                                <FormLabel>API Key</FormLabel>
+                                                <FormControl><Input placeholder="Enter your NagorikPay API Key" {...field} /></FormControl>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
                                     />
                                      <FormField
                                         control={form.control}
-                                        name="rupantorPay.successUrl"
+                                        name="nagorikPay.successUrl"
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Success URL</FormLabel>
@@ -119,7 +117,7 @@ export default function AdminGatewaySettingsPage() {
                                     />
                                      <FormField
                                         control={form.control}
-                                        name="rupantorPay.cancelUrl"
+                                        name="nagorikPay.cancelUrl"
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Cancel URL</FormLabel>
@@ -130,18 +128,7 @@ export default function AdminGatewaySettingsPage() {
                                     />
                                      <FormField
                                         control={form.control}
-                                        name="rupantorPay.failUrl"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Fail URL</FormLabel>
-                                                <FormControl><Input {...field} /></FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                     <FormField
-                                        control={form.control}
-                                        name="rupantorPay.webhookUrl"
+                                        name="nagorikPay.webhookUrl"
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Webhook URL (Optional)</FormLabel>

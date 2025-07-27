@@ -12,31 +12,30 @@ export async function POST(req: NextRequest) {
         }
 
         const settings = await getGatewaySettings();
-        if (!settings?.rupantorPay?.accessToken) {
-            return NextResponse.json({ message: 'RupantorPay Access Token is not configured.' }, { status: 500 });
+        if (!settings?.nagorikPay?.accessToken) {
+            return NextResponse.json({ message: 'NagorikPay Access Token is not configured.' }, { status: 500 });
         }
         
-        const { accessToken, successUrl, cancelUrl, failUrl, webhookUrl } = settings.rupantorPay;
+        const { accessToken, successUrl, cancelUrl, webhookUrl } = settings.nagorikPay;
+
+        const transaction_id = `TRN-${Date.now()}-${uid.substring(0, 6)}`;
 
         const requestBody = {
             amount: amount.toString(),
-            customer_name: fullname,
-            customer_email: email,
-            customer_phone: phone,
+            cus_name: fullname,
+            cus_email: email,
             success_url: successUrl,
             cancel_url: cancelUrl,
-            fail_url: failUrl,
             webhook_url: webhookUrl || undefined,
-            transaction_id: `TRN-${Date.now()}-${uid.substring(0, 6)}`,
-            metadata: { uid: uid },
+            transaction_id: transaction_id,
+            meta_data: JSON.stringify({ uid: uid, phone: phone }),
         };
         
-        const response = await fetch('https://payment.rupantorpay.com/api/payment/checkout', {
+        const response = await fetch('https://secure-pay.nagorikpay.com/api/payment/create', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-API-KEY': accessToken,
-                'X-CLIENT': req.headers.get('host') || 'esports-hq-app',
+                'API-KEY': accessToken,
             },
             body: JSON.stringify(requestBody),
         });
@@ -46,7 +45,7 @@ export async function POST(req: NextRequest) {
         if (response.ok && data.payment_url) {
             return NextResponse.json({ payment_url: data.payment_url });
         } else {
-            console.error('RupantorPay API Error:', data);
+            console.error('NagorikPay API Error:', data);
             return NextResponse.json({ message: data.message || 'Failed to create payment link.' }, { status: response.status });
         }
 

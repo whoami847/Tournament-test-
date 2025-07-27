@@ -248,14 +248,13 @@ export interface TopupRequest {
 
 // --- Gateway Settings ---
 
-export interface RupantorPaySettings {
+export interface NagorikPaySettings {
   accessToken: string;
   successUrl: string;
   cancelUrl: string;
-  failUrl: string;
   webhookUrl?: string;
 }
 
 export interface GatewaySettings {
-  rupantorPay: RupantorPaySettings;
+  nagorikPay: NagorikPaySettings;
 }
