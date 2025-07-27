@@ -131,7 +131,7 @@ export default function TournamentDetailsClient({ initialTournament }: { initial
       handleOpenSubmissionDialog(matchesToSubmit[0]);
       setSubmissionDialogShown(true);
     }
-  }, [matchesToSubmit, submissionDialogShown, handleOpenSubmissionDialog, userTeam]);
+  }, [matchesToSubmit, submissionDialogShown, userTeam]);
 
   const currentUserMatch = useMemo(() => {
     if (!userTeam || !tournament?.bracket) {
@@ -318,14 +318,18 @@ export default function TournamentDetailsClient({ initialTournament }: { initial
                                 <AccordionTrigger className="bg-muted hover:no-underline rounded-md px-4 py-2.5 text-sm font-semibold border hover:border-primary/50">
                                     <div className="flex items-center gap-2">
                                         <Award className="h-4 w-4 text-primary" />
-                                        Total Prize Details
+                                        Prize Distribution
                                     </div>
                                 </AccordionTrigger>
                                 <AccordionContent className="p-4 bg-muted/50 rounded-b-md text-sm text-muted-foreground">
                                     <ul className="list-disc list-inside space-y-1 font-medium text-foreground/80">
-                                        <li>1st Place: {Math.round(parseInt(tournament.prizePool.replace(/,/g, '')) * 0.5)} TK</li>
-                                        <li>2nd Place: {Math.round(parseInt(tournament.prizePool.replace(/,/g, '')) * 0.3)} TK</li>
-                                        <li>3rd Place: {Math.round(parseInt(tournament.prizePool.replace(/,/g, '')) * 0.2)} TK</li>
+                                        {tournament.prizeDistribution && tournament.prizeDistribution.length > 0 ? (
+                                            tournament.prizeDistribution.map(prize => (
+                                                <li key={prize.place}>{prize.place}{prize.place === 1 ? 'st' : prize.place === 2 ? 'nd' : prize.place === 3 ? 'rd' : 'th'} Place: {prize.amount} TK</li>
+                                            ))
+                                        ) : (
+                                            <li>Prize details not specified.</li>
+                                        )}
                                     </ul>
                                 </AccordionContent>
                             </AccordionItem>

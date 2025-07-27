@@ -46,6 +46,11 @@ export interface PointSystem {
   placementPoints: PlacementPoint[];
 }
 
+export interface PrizePlacement {
+  place: number;
+  amount: number;
+}
+
 export interface Tournament {
   id: string;
   name: string;
@@ -55,6 +60,7 @@ export interface Tournament {
   maxTeams: number;
   entryFee: number;
   prizePool: string;
+  prizeDistribution?: PrizePlacement[];
   rules: string;
   status: 'upcoming' | 'live' | 'completed';
   participants: Team[];

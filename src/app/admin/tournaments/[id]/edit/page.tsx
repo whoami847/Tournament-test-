@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { EditInfoForm } from '@/components/admin/edit-info-form';
 import { EditRulesForm } from '@/components/admin/edit-rules-form';
+import { EditPrizesForm } from '@/components/admin/edit-prizes-form';
 import { BracketEditor } from '@/components/admin/bracket-editor';
 import { ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -119,9 +120,10 @@ export default function EditTournamentPage() {
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-4">
+                <TabsList className="grid w-full grid-cols-5">
                     <TabsTrigger value="info">Info</TabsTrigger>
                     <TabsTrigger value="rules">Rules</TabsTrigger>
+                    <TabsTrigger value="prizes">Prizes</TabsTrigger>
                     <TabsTrigger value="bracket">Bracket</TabsTrigger>
                     <TabsTrigger value="points">Points</TabsTrigger>
                 </TabsList>
@@ -144,6 +146,17 @@ export default function EditTournamentPage() {
                         </CardHeader>
                         <CardContent>
                             <EditRulesForm tournament={tournament} onSave={handleSave} />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+                 <TabsContent value="prizes">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Prize Distribution</CardTitle>
+                            <CardDescription>Define the prize money for each placement.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <EditPrizesForm tournament={tournament} onSave={handleSave} />
                         </CardContent>
                     </Card>
                 </TabsContent>

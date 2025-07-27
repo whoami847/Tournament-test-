@@ -48,6 +48,10 @@ const formSchema = z.object({
   maxTeams: z.coerce.number().int().min(2, "Must have at least 2 teams/players.").max(64, "Cannot exceed 64 teams."),
   entryFee: z.coerce.number().min(0).optional(),
   prizePool: z.string().min(1, "Prize pool is required."),
+  prizeDistribution: z.array(z.object({
+    place: z.coerce.number().int().min(1),
+    amount: z.coerce.number().min(0),
+  })).optional(),
   rules: z.string().min(50, "Rules must be at least 50 characters long."),
   format: z.string(), // Will be constructed from mode and teamType
   map: z.string().optional(),
@@ -93,6 +97,11 @@ export default function CreateTournamentPage() {
             maxTeams: 16,
             entryFee: 0,
             prizePool: "1,000",
+            prizeDistribution: [
+                { place: 1, amount: 500 },
+                { place: 2, amount: 300 },
+                { place: 3, amount: 200 },
+            ],
             rules: "Standard league rules apply. All matches are Best of 3 until the finals, which are Best of 5. No cheating or exploiting bugs. All players must be registered with their official in-game names.",
             format: "BR_SQUAD",
             map: "Bermuda",
@@ -109,9 +118,14 @@ export default function CreateTournamentPage() {
         },
     })
 
-    const { fields, append, remove } = useFieldArray({
+    const { fields: placementPointFields, append: appendPlacementPoint, remove: removePlacementPoint } = useFieldArray({
         control: form.control,
         name: "placementPoints"
+    });
+    
+    const { fields: prizeDistributionFields, append: appendPrize, remove: removePrize } = useFieldArray({
+        control: form.control,
+        name: "prizeDistribution"
     });
 
     const mode = form.watch('mode');
@@ -416,6 +430,46 @@ export default function CreateTournamentPage() {
                                 )}
                             />
 
+                             <Card className="p-6">
+                                <h3 className="text-lg font-medium mb-4">Prize Distribution</h3>
+                                <div className="space-y-4">
+                                    {prizeDistributionFields.map((field, index) => (
+                                        <div key={field.id} className="flex items-center gap-4 p-4 border rounded-md bg-muted/50">
+                                            <FormField
+                                                control={form.control}
+                                                name={`prizeDistribution.${index}.place`}
+                                                render={({ field }) => (
+                                                    <FormItem className="flex-1">
+                                                        <FormLabel>Place</FormLabel>
+                                                        <FormControl><Input type="number" placeholder="e.g., 1" {...field} /></FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name={`prizeDistribution.${index}.amount`}
+                                                render={({ field }) => (
+                                                    <FormItem className="flex-1">
+                                                        <FormLabel>Amount (TK)</FormLabel>
+                                                        <FormControl><Input type="number" placeholder="e.g., 500" {...field} /></FormControl>
+                                                        <FormMessage />
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <Button type="button" variant="destructive" size="icon" onClick={() => removePrize(index)} className="self-end">
+                                                <Trash2 className="h-4 w-4" />
+                                                <span className="sr-only">Remove Prize</span>
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                                <Button type="button" variant="outline" size="sm" onClick={() => appendPrize({ place: prizeDistributionFields.length + 1, amount: 0 })} className="mt-4">
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    Add Prize
+                                </Button>
+                            </Card>
+
                             <Card className="p-6">
                                 <FormField
                                     control={form.control}
@@ -454,7 +508,7 @@ export default function CreateTournamentPage() {
                                         <div>
                                             <h4 className="mb-2 text-lg font-medium">Placement Points</h4>
                                             <div className="space-y-4">
-                                                {fields.map((field, index) => (
+                                                {placementPointFields.map((field, index) => (
                                                     <div key={field.id} className="flex items-center gap-4 p-4 border rounded-md bg-muted/50">
                                                         <FormField
                                                             control={form.control}
@@ -478,14 +532,14 @@ export default function CreateTournamentPage() {
                                                                 </FormItem>
                                                             )}
                                                         />
-                                                        <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)} className="self-end">
+                                                        <Button type="button" variant="destructive" size="icon" onClick={() => removePlacementPoint(index)} className="self-end">
                                                             <Trash2 className="h-4 w-4" />
                                                             <span className="sr-only">Remove Placement</span>
                                                         </Button>
                                                     </div>
                                                 ))}
                                             </div>
-                                            <Button type="button" variant="outline" size="sm" onClick={() => append({ place: fields.length + 1, points: 0 })} className="mt-4">
+                                            <Button type="button" variant="outline" size="sm" onClick={() => appendPlacementPoint({ place: placementPointFields.length + 1, points: 0 })} className="mt-4">
                                                 <PlusCircle className="mr-2 h-4 w-4" />
                                                 Add Placement
                                             </Button>
