@@ -49,14 +49,14 @@ const Countdown = ({ targetDate }: { targetDate: string }) => {
 
   if (timeLeft.total <= 0) {
       return (
-        <div className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-3 py-2 text-sm font-bold text-white">
+        <div className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-red-500">
             <span>STARTING SOON</span>
         </div>
       );
   }
 
   return (
-    <div className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-bold text-white">
+    <div className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-bold text-amber-400">
       <Clock className="h-4 w-4" />
       <span>
         STARTS IN - {pad(timeLeft.hours)}h:{pad(timeLeft.minutes)}m:{pad(timeLeft.seconds)}s

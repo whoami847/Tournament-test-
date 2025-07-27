@@ -57,7 +57,7 @@ export default function TournamentCard({ tournament, isBookmarked, onBookmarkTog
           </div>
           
           <div className="flex-grow flex flex-col justify-end mt-4">
-            <p className="text-sm font-semibold text-primary">{tournament.game}</p>
+            <p className="text-sm font-semibold text-amber-400">{tournament.game}</p>
             <h3 className="text-2xl font-bold tracking-tight">{tournament.name}</h3>
             
             <div className="mt-4 space-y-3">
@@ -65,20 +65,26 @@ export default function TournamentCard({ tournament, isBookmarked, onBookmarkTog
                 <Calendar className="h-4 w-4" />
                 <span>{format(new Date(tournament.startDate), 'PPP, p')}</span>
               </div>
-              {tournament.status === 'upcoming' && (
-                <Countdown targetDate={tournament.startDate as string} />
-              )}
             </div>
 
-            <div className="flex justify-between items-center mt-4 pt-4 border-t border-white/20">
-              <div className="flex items-center gap-2 text-sm">
-                <Users className="h-4 w-4" />
-                <span>{tournament.teamsCount} / {tournament.maxTeams} teams</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <Trophy className="h-4 w-4" />
-                <span>{tournament.prizePool} TK Prize Pool</span>
-              </div>
+            <div className="flex-grow"></div>
+
+            <div className="mt-auto space-y-4">
+                <div className="flex justify-between items-center pt-4 border-t border-white/20">
+                    <div className="flex items-center gap-2 text-sm">
+                        <Users className="h-4 w-4" />
+                        <span>{tournament.teamsCount} / {tournament.maxTeams} teams</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                        <Trophy className="h-4 w-4" />
+                        <span>{tournament.prizePool} TK Prize Pool</span>
+                    </div>
+                </div>
+                 {tournament.status === 'upcoming' && (
+                    <div className="w-full">
+                       <Countdown targetDate={tournament.startDate as string} />
+                    </div>
+                )}
             </div>
           </div>
         </div>
