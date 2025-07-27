@@ -27,7 +27,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { getUserProfileStream } from "@/lib/users-service";
 import type { PlayerProfile, Transaction, WithdrawMethod, TopupMethod, Order } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getTransactionsStream, createOrder } from "@/lib/transactions-service";
+import { getTransactionsStream } from "@/lib/transactions-service";
 import { createWithdrawalRequest } from '@/lib/withdraw-requests-service';
 import { getActiveWithdrawMethods } from '@/lib/withdraw-methods-service';
 import { getActiveTopupMethods } from '@/lib/topup-settings-service';
@@ -36,7 +36,6 @@ import { format } from 'date-fns';
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { initiatePayment } from '@/lib/rupantorpay-service';
 
 // --- SUB-COMPONENTS ---
 
@@ -89,6 +88,16 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isAutoSubmitting, setIsAutoSubmitting] = useState(false);
 
+    useEffect(() => {
+        const script = document.createElement('script');
+        script.src = 'https://rupantorpay.com/public/assets/js/checkout.js';
+        script.async = true;
+        document.body.appendChild(script);
+
+        return () => {
+            document.body.removeChild(script);
+        };
+    }, []);
 
     const fetchManualMethods = useCallback(async () => {
         setLoadingManualMethods(true);
@@ -105,7 +114,6 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
     const handleOpenChange = (open: boolean) => {
         setIsOpen(open);
         if (!open) {
-            // Reset state on close
             setStep(0);
             setAmount('');
             setTransactionId('');
@@ -115,7 +123,7 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
     
     const handleManualMethodSelect = (method: TopupMethod) => {
         setSelectedManualMethod(method);
-        setStep(1); // Manual deposit form
+        setStep(1);
     }
     
     const handleManualRequestSubmit = async () => {
@@ -152,33 +160,37 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
         }
         
         setIsAutoSubmitting(true);
-        const paymentPayload = {
-            amount: parseFloat(amount),
-            customer_name: profile.name,
-            customer_email: profile.email,
-            customer_phone: '01234567890', // Assuming a placeholder, ideally this comes from profile
-            metadata: { user_id: profile.id },
-        };
-
         try {
-            const paymentUrl = await initiatePayment(paymentPayload);
+            const res = await fetch('/api/create-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    fullname: profile.name,
+                    email: profile.email,
+                    amount: parseFloat(amount),
+                    uid: profile.id,
+                    phone: '01234567890' // Placeholder, this should ideally be in profile
+                }),
+            });
 
-            if (paymentUrl) {
-                window.location.href = paymentUrl; // Redirect to payment gateway
+            const data = await res.json();
+            if (res.ok && data.payment_url) {
+                // @ts-ignore - rupantorpayCheckOut is loaded from external script
+                rupantorpayCheckOut(data.payment_url);
             } else {
-                throw new Error("Could not get payment URL.");
+                throw new Error(data.message || 'Failed to create payment URL.');
             }
 
         } catch (error: any) {
             toast({ title: "Payment Error", description: error.message, variant: "destructive" });
+        } finally {
             setIsAutoSubmitting(false);
         }
     };
 
-
     const renderStepContent = () => {
         switch (step) {
-            case 0: // Choice
+            case 0:
                 return (
                     <div className="grid grid-cols-2 gap-4 py-4">
                         <button onClick={() => { setStep(1); fetchManualMethods(); }} className="flex flex-col items-center justify-center gap-2 rounded-md border p-4 text-center hover:bg-accent hover:border-primary">
@@ -191,10 +203,10 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
                         </button>
                     </div>
                 );
-            case 1: // Manual Deposit Flow
-                return selectedManualMethod ? ( // Manual form
+            case 1:
+                return selectedManualMethod ? (
                     <div className="space-y-4 py-4">
-                        <Button variant="link" onClick={() => { setSelectedManualMethod(null); setStep(0); }} className="p-0 h-auto text-sm">&larr; Back to methods</Button>
+                        <Button variant="link" onClick={() => { setSelectedManualMethod(null); setStep(1); }} className="p-0 h-auto text-sm">&larr; Back to methods</Button>
                         <Alert>
                             <AlertTitle>{selectedManualMethod.name} Instructions</AlertTitle>
                             <AlertDescription className="space-y-2">
@@ -213,7 +225,7 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
                             <Input id="transactionId" value={transactionId} onChange={(e) => setTransactionId(e.target.value)} placeholder="Enter the transaction ID" />
                         </div>
                     </div>
-                ) : ( // Manual method selection
+                ) : (
                      <div className="space-y-4 py-4">
                          <Button variant="link" onClick={() => setStep(0)} className="p-0 h-auto text-sm">&larr; Back</Button>
                         {loadingManualMethods ? <Loader2 className="mx-auto h-6 w-6 animate-spin" /> : manualMethods.length > 0 ? (
@@ -230,7 +242,7 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
                         )}
                     </div>
                 );
-             case 2: // Auto Deposit
+             case 2:
                 return (
                      <form onSubmit={handleAutoPayment} className="space-y-4 py-4">
                         <Button variant="link" onClick={() => setStep(0)} className="p-0 h-auto text-sm">&larr; Back</Button>
@@ -238,7 +250,7 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
                            <CreditCard className="h-4 w-4" />
                            <AlertTitle>Pay with RupantorPay</AlertTitle>
                            <AlertDescription>
-                             You will be redirected to the secure RupantorPay gateway to complete your payment.
+                             You will be shown a payment popup to complete your payment securely.
                            </AlertDescription>
                         </Alert>
                         <div className="space-y-2">

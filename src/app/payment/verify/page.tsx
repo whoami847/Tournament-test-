@@ -2,99 +2,108 @@
 'use client';
 
 import { useEffect, useState, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { firestore } from '@/lib/firebase';
-import { doc, getDoc, updateDoc, collection, runTransaction } from 'firebase/firestore';
-import type { Order, PlayerProfile } from '@/types';
-import { Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { Loader2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { verifyPayment } from '@/lib/rupantorpay-service';
 
 function VerificationComponent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const [status, setStatus] = useState<'verifying' | 'success' | 'failed' | 'not_found'>('verifying');
+  const [status, setStatus] = useState<'verifying' | 'success' | 'failed' | 'cancelled'>('verifying');
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    const verify = async () => {
-      const transaction_id = searchParams.get('transactionId');
-      const payment_status = searchParams.get('status');
+    const transactionId = searchParams.get('transactionId');
+    const paymentStatus = searchParams.get('status');
 
-      if (!transaction_id) {
-        setStatus('failed');
-        setMessage('Invalid payment response. Missing transaction ID.');
+    if (!transactionId) {
+      setStatus('failed');
+      setMessage('Invalid payment response. Missing transaction ID.');
+      return;
+    }
+    
+    if (paymentStatus === 'cancel') {
+        setStatus('cancelled');
+        setMessage('Payment was cancelled by the user.');
         return;
-      }
-      
-      if (payment_status !== 'COMPLETED' && payment_status !== 'success') { // Allow both "COMPLETED" and "success"
+    }
+
+    if (paymentStatus === 'fail') {
         setStatus('failed');
-        setMessage(`Payment was not successful. Status: ${payment_status || 'UNKNOWN'}`);
+        setMessage('Payment failed. Please try again.');
         return;
-      }
-      
-      try {
-        const verificationResult = await verifyPayment({ transaction_id });
+    }
 
-        if (verificationResult.status !== 'COMPLETED' && verificationResult.status !== 'success') {
-            throw new Error(`Payment could not be verified or is not complete. Status: ${verificationResult.status}`);
-        }
-
-        const userId = verificationResult.metadata?.user_id;
-        if (!userId) {
-            throw new Error('User ID not found in payment metadata.');
-        }
-
-        await runTransaction(firestore, async (transaction) => {
-          const userRef = doc(firestore, 'users', userId);
-          const userDoc = await transaction.get(userRef);
-          if (!userDoc.exists()) {
-            throw new Error('User account not found.');
-          }
-
-          const orderAmount = parseFloat(verificationResult.amount);
-          if (isNaN(orderAmount)) {
-             throw new Error('Invalid amount received from payment gateway.');
-          }
-          
-          const userData = userDoc.data() as PlayerProfile;
-          const newBalance = (userData.balance || 0) + orderAmount;
-
-          transaction.update(userRef, { balance: newBalance });
-          
+    fetch(`/api/verify-payment`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transaction_id: transactionId }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'COMPLETED') {
           setStatus('success');
-          setMessage(`Successfully added ${orderAmount} TK to your wallet.`);
-        });
-      } catch (error: any) {
+          setMessage(`Payment successful! ${data.amount || ''} TK has been added to your wallet.`);
+        } else {
+          setStatus('failed');
+          setMessage(`Payment verification failed. Status: ${data.status || 'UNKNOWN'}`);
+        }
+      })
+      .catch((err) => {
         setStatus('failed');
-        setMessage(error.message || 'An unexpected error occurred during verification.');
-        console.error("Verification Error:", error);
-      }
-    };
+        setMessage('An error occurred during verification. Please contact support.');
+        console.error("Verification fetch error:", err);
+      });
 
-    verify();
   }, [searchParams]);
+
+  const renderContent = () => {
+    switch(status) {
+        case 'verifying':
+            return {
+                icon: <Loader2 className="h-12 w-12 animate-spin text-primary" />,
+                title: 'Verifying Payment',
+                description: 'Please wait while we confirm your transaction...'
+            };
+        case 'success':
+            return {
+                icon: <CheckCircle className="h-12 w-12 text-green-500" />,
+                title: 'Payment Successful',
+                description: message
+            };
+        case 'failed':
+            return {
+                icon: <XCircle className="h-12 w-12 text-destructive" />,
+                title: 'Payment Failed',
+                description: message
+            };
+        case 'cancelled':
+             return {
+                icon: <AlertCircle className="h-12 w-12 text-amber-500" />,
+                title: 'Payment Cancelled',
+                description: message
+            };
+        default:
+            return {
+                icon: <XCircle className="h-12 w-12 text-destructive" />,
+                title: 'Error',
+                description: 'An unknown error occurred.'
+            };
+    }
+  }
+
+  const { icon, title, description } = renderContent();
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md text-center">
         <CardHeader>
-          <div className="mx-auto w-fit mb-4">
-            {status === 'verifying' && <Loader2 className="h-12 w-12 animate-spin text-primary" />}
-            {status === 'success' && <CheckCircle className="h-12 w-12 text-green-500" />}
-            {status === 'failed' && <XCircle className="h-12 w-12 text-destructive" />}
-            {status === 'not_found' && <XCircle className="h-12 w-12 text-destructive" />}
-          </div>
-          <CardTitle className="capitalize">
-            {status === 'verifying' ? 'Verifying Payment' : 'Payment Verification'}
-          </CardTitle>
+          <div className="mx-auto w-fit mb-4">{icon}</div>
+          <CardTitle className="capitalize">{title}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground mb-6">
-            {status === 'verifying' ? 'Please wait while we confirm your transaction...' : message}
-          </p>
+          <p className="text-muted-foreground mb-6">{description}</p>
           {status !== 'verifying' && (
             <Button asChild>
               <Link href="/wallet">Back to Wallet</Link>

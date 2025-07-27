@@ -1,4 +1,5 @@
 
+
 import type { Transaction, Order } from '@/types';
 import { firestore } from './firebase';
 import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, doc, setDoc } from 'firebase/firestore';
@@ -33,15 +34,4 @@ export const getTransactionsStream = (
   });
 
   return unsubscribe;
-};
-
-// New service to handle orders
-const ordersCollection = collection(firestore, 'orders');
-
-export const createOrder = async (order: Omit<Order, 'id'>) => {
-    const newOrderRef = doc(ordersCollection, order.tran_id);
-    await setDoc(newOrderRef, {
-        ...order,
-    });
-    return newOrderRef.id;
 };
