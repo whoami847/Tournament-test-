@@ -24,6 +24,7 @@ const statusColors: Record<string, string> = {
 export default function TournamentCard({ tournament, isBookmarked, onBookmarkToggle }: TournamentCardProps) {
   const statusColor = statusColors[tournament.status] || 'bg-gray-500/80';
   const isFull = tournament.teamsCount >= tournament.maxTeams;
+  const isSolo = tournament.format.toUpperCase().includes('SOLO');
 
   return (
     <Link href={`/tournaments/${tournament.id}`} className="block h-full group">
@@ -73,7 +74,7 @@ export default function TournamentCard({ tournament, isBookmarked, onBookmarkTog
                 <div className="flex justify-between items-center pt-4 border-t border-white/20">
                     <div className="flex items-center gap-2 text-sm">
                         <Users className="h-4 w-4" />
-                        <span>{tournament.teamsCount} / {tournament.maxTeams} teams</span>
+                        <span>{tournament.teamsCount} / {tournament.maxTeams} {isSolo ? 'players' : 'teams'}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm">
                         <Trophy className="h-4 w-4" />
