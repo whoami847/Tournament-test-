@@ -217,9 +217,8 @@ export default function TournamentDetailsClient({ initialTournament }: { initial
             data-ai-hint={tournament.dataAiHint as string}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
-        <div className="absolute z-10 bottom-0 left-0 right-0 p-4 space-y-4">
+        <div className="absolute z-10 bottom-0 left-0 right-0 p-4 space-y-4 text-center text-white">
             <motion.div
-                className="text-center text-white"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
@@ -227,122 +226,118 @@ export default function TournamentDetailsClient({ initialTournament }: { initial
                 <Badge variant="secondary" className="mb-2 bg-white/10 text-white border-white/20">{tournament.game}</Badge>
                 <h1 className="text-4xl md:text-5xl font-extrabold shadow-lg">{tournament.name}</h1>
             </motion.div>
+        </div>
+      </div>
 
-             <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-            >
-                <Tabs defaultValue="info" className="w-full">
-                    <TabsList className="flex w-full justify-center gap-2 bg-transparent p-1 h-auto">
-                      <TabsTrigger value="info" className="rounded-full bg-background/20 backdrop-blur-sm text-white data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Info</TabsTrigger>
-                      <TabsTrigger value="bracket" className="rounded-full bg-background/20 backdrop-blur-sm text-white data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Bracket</TabsTrigger>
-                      <TabsTrigger value="rules" className="rounded-full bg-background/20 backdrop-blur-sm text-white data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Rules</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="info" className="mt-4">
-                      <Card className="bg-card/50 backdrop-blur-sm">
-                        <CardContent className="p-6">
-                          <div className="mb-8">
-                              <InfoRow icon={Trophy} label="Total Prize" value={`${tournament.prizePool} TK`} index={0} />
-                              <InfoRow icon={Award} label="Per Kill Prize" value={`${tournament.perKillPrize || 0} TK`} index={1} />
-                              <InfoRow icon={Ticket} label="Entry Fee" value={tournament.entryFee > 0 ? `${tournament.entryFee} TK` : 'Free'} index={2} />
-                              <InfoRow icon={Users} label="Team Format" value={getEntryType(tournament.format)} index={3} />
-                              <InfoRow icon={Users} label="Total Squads" value={tournament.maxTeams} index={4} />
-                              <InfoRow icon={MapIcon} label="Map" value={tournament.map || 'TBD'} index={5} />
-                              <InfoRow icon={Smartphone} label="Game Version" value={tournament.version || 'N/A'} index={6} />
-                          </div>
+      <div className="container mx-auto px-4 -mt-10 relative z-20">
+        <Tabs defaultValue="info" className="w-full">
+            <TabsList className="flex w-full justify-center gap-2 bg-transparent p-1 h-auto">
+              <TabsTrigger value="info" className="rounded-full bg-background/20 backdrop-blur-sm text-white data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Info</TabsTrigger>
+              <TabsTrigger value="bracket" className="rounded-full bg-background/20 backdrop-blur-sm text-white data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Bracket</TabsTrigger>
+              <TabsTrigger value="rules" className="rounded-full bg-background/20 backdrop-blur-sm text-white data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg">Rules</TabsTrigger>
+            </TabsList>
+            <TabsContent value="info" className="mt-4">
+              <Card className="bg-card/50 backdrop-blur-sm">
+                <CardContent className="p-6">
+                  <div className="mb-8">
+                      <InfoRow icon={Trophy} label="Total Prize" value={`${tournament.prizePool} TK`} index={0} />
+                      <InfoRow icon={Award} label="Per Kill Prize" value={`${tournament.perKillPrize || 0} TK`} index={1} />
+                      <InfoRow icon={Ticket} label="Entry Fee" value={tournament.entryFee > 0 ? `${tournament.entryFee} TK` : 'Free'} index={2} />
+                      <InfoRow icon={Users} label="Team Format" value={getEntryType(tournament.format)} index={3} />
+                      <InfoRow icon={Users} label="Total Squads" value={tournament.maxTeams} index={4} />
+                      <InfoRow icon={MapIcon} label="Map" value={tournament.map || 'TBD'} index={5} />
+                      <InfoRow icon={Smartphone} label="Game Version" value={tournament.version || 'N/A'} index={6} />
+                  </div>
 
 
-                          <div className="mt-8">
-                              <div className="flex items-center gap-4">
-                                  <div className="w-full">
-                                      <Progress 
-                                        value={(currentPlayerCount / totalPlayerSlots) * 100} 
-                                        indicatorClassName={cn(isFull && "bg-destructive")} 
-                                      />
-                                      <div className="flex justify-between text-xs text-muted-foreground mt-1.5">
-                                          <span>{isFull ? 'Registration is closed' : `Only ${totalPlayerSlots - currentPlayerCount} spots are left`}</span>
-                                          <span>{currentPlayerCount}/{totalPlayerSlots} Players</span>
-                                      </div>
-                                  </div>
-                                  {tournament.status === 'upcoming' && (
-                                      <Button
-                                          onClick={handleJoinClick}
-                                          disabled={isButtonDisabled}
-                                          className={cn("shrink-0 rounded-full font-bold", isFull && !isAlreadyJoined && "bg-destructive text-destructive-foreground hover:bg-destructive/90")}
-                                      >
-                                          {joinButtonText}
-                                      </Button>
-                                  )}
+                  <div className="mt-8">
+                      <div className="flex items-center gap-4">
+                          <div className="w-full">
+                              <Progress 
+                                value={(currentPlayerCount / totalPlayerSlots) * 100} 
+                                indicatorClassName={cn(isFull && "bg-destructive")} 
+                              />
+                              <div className="flex justify-between text-xs text-muted-foreground mt-1.5">
+                                  <span>{isFull ? 'Registration is closed' : `Only ${totalPlayerSlots - currentPlayerCount} spots are left`}</span>
+                                  <span>{currentPlayerCount}/{totalPlayerSlots} Players</span>
                               </div>
                           </div>
+                          {tournament.status === 'upcoming' && (
+                              <Button
+                                  onClick={handleJoinClick}
+                                  disabled={isButtonDisabled}
+                                  className={cn("shrink-0 rounded-full font-bold", isFull && !isAlreadyJoined && "bg-destructive text-destructive-foreground hover:bg-destructive/90")}
+                              >
+                                  {joinButtonText}
+                              </Button>
+                          )}
+                      </div>
+                  </div>
 
-                          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Accordion type="single" collapsible>
-                                <AccordionItem value="room-details" className="border-b-0">
-                                    <AccordionTrigger className="bg-muted hover:no-underline rounded-md px-4 py-2.5 text-sm font-semibold border hover:border-primary/50">
-                                        <div className="flex items-center gap-2">
-                                            <KeyRound className="h-4 w-4 text-primary" />
-                                            Room Details
-                                        </div>
-                                    </AccordionTrigger>
-                                    <AccordionContent className="p-4 bg-muted/50 rounded-b-md text-sm text-muted-foreground">
-                                        {currentUserMatch ? (
-                                            <div className="space-y-3">
-                                                <CopyToClipboard text={currentUserMatch.roomId!} label="Room ID" />
-                                                {currentUserMatch.roomPass && <CopyToClipboard text={currentUserMatch.roomPass} label="Room Password" />}
-                                            </div>
-                                        ) : (
-                                            <p>Room ID and password for your match will be shown here once published by the admin.</p>
-                                        )}
-                                    </AccordionContent>
-                                </AccordionItem>
-                            </Accordion>
-                            <Accordion type="single" collapsible>
-                                <AccordionItem value="prize-details" className="border-b-0">
-                                    <AccordionTrigger className="bg-muted hover:no-underline rounded-md px-4 py-2.5 text-sm font-semibold border hover:border-primary/50">
-                                        <div className="flex items-center gap-2">
-                                            <Award className="h-4 w-4 text-primary" />
-                                            Prize Distribution
-                                        </div>
-                                    </AccordionTrigger>
-                                    <AccordionContent className="p-4 bg-muted/50 rounded-b-md text-sm text-muted-foreground">
-                                        <ul className="list-disc list-inside space-y-1 font-medium text-foreground/80">
-                                            {tournament.prizeDistribution && tournament.prizeDistribution.length > 0 ? (
-                                                tournament.prizeDistribution.map(prize => (
-                                                    <li key={prize.place}>{prize.place}{prize.place === 1 ? 'st' : prize.place === 2 ? 'nd' : prize.place === 3 ? 'rd' : 'th'} Place: {prize.amount} TK</li>
-                                                ))
-                                            ) : (
-                                                <li>Prize details not specified.</li>
-                                            )}
-                                        </ul>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            </Accordion>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </TabsContent>
-                    <TabsContent value="bracket" className="mt-4">
-                        <Card className="bg-card/50 backdrop-blur-sm">
-                            <CardContent className="text-center py-12">
-                                 <p className="text-muted-foreground mb-4">The bracket is displayed in a dedicated view for a better experience.</p>
-                                 <Button asChild size="lg" className="rounded-full">
-                                    <Link href={`/tournaments/${tournament.id}/bracket`}>View Full Bracket</Link>
-                                 </Button>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                    <TabsContent value="rules" className="mt-4">
-                        <Card className="bg-card/50 backdrop-blur-sm">
-                            <CardContent className="prose prose-invert prose-p:text-muted-foreground p-6">
-                                <p>{tournament.rules}</p>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                </Tabs>
-            </motion.div>
-        </div>
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Accordion type="single" collapsible>
+                        <AccordionItem value="room-details" className="border-b-0">
+                            <AccordionTrigger className="bg-muted hover:no-underline rounded-md px-4 py-2.5 text-sm font-semibold border hover:border-primary/50">
+                                <div className="flex items-center gap-2">
+                                    <KeyRound className="h-4 w-4 text-primary" />
+                                    Room Details
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="p-4 bg-muted/50 rounded-b-md text-sm text-muted-foreground">
+                                {currentUserMatch ? (
+                                    <div className="space-y-3">
+                                        <CopyToClipboard text={currentUserMatch.roomId!} label="Room ID" />
+                                        {currentUserMatch.roomPass && <CopyToClipboard text={currentUserMatch.roomPass} label="Room Password" />}
+                                    </div>
+                                ) : (
+                                    <p>Room ID and password for your match will be shown here once published by the admin.</p>
+                                )}
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                    <Accordion type="single" collapsible>
+                        <AccordionItem value="prize-details" className="border-b-0">
+                            <AccordionTrigger className="bg-muted hover:no-underline rounded-md px-4 py-2.5 text-sm font-semibold border hover:border-primary/50">
+                                <div className="flex items-center gap-2">
+                                    <Award className="h-4 w-4 text-primary" />
+                                    Prize Distribution
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="p-4 bg-muted/50 rounded-b-md text-sm text-muted-foreground">
+                                <ul className="list-disc list-inside space-y-1 font-medium text-foreground/80">
+                                    {tournament.prizeDistribution && tournament.prizeDistribution.length > 0 ? (
+                                        tournament.prizeDistribution.map(prize => (
+                                            <li key={prize.place}>{prize.place}{prize.place === 1 ? 'st' : prize.place === 2 ? 'nd' : prize.place === 3 ? 'rd' : 'th'} Place: {prize.amount} TK</li>
+                                        ))
+                                    ) : (
+                                        <li>Prize details not specified.</li>
+                                    )}
+                                </ul>
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="bracket" className="mt-4">
+                <Card className="bg-card/50 backdrop-blur-sm">
+                    <CardContent className="text-center py-12">
+                         <p className="text-muted-foreground mb-4">The bracket is displayed in a dedicated view for a better experience.</p>
+                         <Button asChild size="lg" className="rounded-full">
+                            <Link href={`/tournaments/${tournament.id}/bracket`}>View Full Bracket</Link>
+                         </Button>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="rules" className="mt-4">
+                <Card className="bg-card/50 backdrop-blur-sm">
+                    <CardContent className="prose prose-invert prose-p:text-muted-foreground p-6">
+                        <p>{tournament.rules}</p>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        </Tabs>
       </div>
     </div>
     </>
