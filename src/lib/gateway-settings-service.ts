@@ -7,7 +7,7 @@ const settingsDocRef = doc(firestore, 'appSettings', 'gateways');
 
 export const saveGatewaySettings = async (settings: GatewaySettings) => {
   try {
-    await setDoc(settingsDocRef, settings);
+    await setDoc(settingsDocRef, settings, { merge: true }); // Use merge to avoid overwriting other settings
     return { success: true };
   } catch (error: any) {
     console.error("Error saving gateway settings: ", error);
@@ -21,7 +21,16 @@ export const getGatewaySettings = async (): Promise<GatewaySettings | null> => {
     if (docSnap.exists()) {
       return docSnap.data() as GatewaySettings;
     }
-    return null;
+    // Return default settings if document doesn't exist
+    return {
+        nagorikPay: {
+            accessToken: '',
+            successUrl: '',
+            cancelUrl: '',
+            webhookUrl: '',
+        },
+        manualTopupEnabled: true,
+    };
   } catch (error: any) {
     console.error("Error fetching gateway settings: ", error);
     return null;

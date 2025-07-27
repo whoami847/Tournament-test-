@@ -25,7 +25,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { getUserProfileStream } from "@/lib/users-service";
-import type { PlayerProfile, Transaction, WithdrawMethod, TopupMethod, Order } from "@/types";
+import type { PlayerProfile, Transaction, WithdrawMethod, TopupMethod, Order, GatewaySettings } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getTransactionsStream } from "@/lib/transactions-service";
 import { createWithdrawalRequest } from '@/lib/withdraw-requests-service';
@@ -36,6 +36,7 @@ import { format } from 'date-fns';
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { getGatewaySettings } from "@/lib/gateway-settings-service";
 
 // --- SUB-COMPONENTS ---
 
@@ -87,19 +88,21 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
     const [loadingManualMethods, setLoadingManualMethods] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isAutoSubmitting, setIsAutoSubmitting] = useState(false);
+    const [gatewaySettings, setGatewaySettings] = useState<GatewaySettings | null>(null);
 
     useEffect(() => {
-        // This script is for RupantorPay popup, might need adjustment for NagorikPay if they have one.
-        // For now, we rely on redirection.
-        const script = document.createElement('script');
-        script.src = 'https://rupantorpay.com/public/assets/js/checkout.js'; // This might be from a previous integration
-        script.async = true;
-        document.body.appendChild(script);
-
-        return () => {
-            document.body.removeChild(script);
-        };
-    }, []);
+        const fetchSettings = async () => {
+            const settings = await getGatewaySettings();
+            setGatewaySettings(settings);
+            // If manual topup is disabled, go directly to auto payment
+            if (settings?.manualTopupEnabled === false) {
+                setStep(2);
+            }
+        }
+        if (isOpen) {
+            fetchSettings();
+        }
+    }, [isOpen]);
 
     const fetchManualMethods = useCallback(async () => {
         setLoadingManualMethods(true);
@@ -116,7 +119,8 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
     const handleOpenChange = (open: boolean) => {
         setIsOpen(open);
         if (!open) {
-            setStep(0);
+            // Reset state, respecting the initial setting
+            setStep(gatewaySettings?.manualTopupEnabled === false ? 2 : 0);
             setAmount('');
             setTransactionId('');
             setSelectedManualMethod(null);
@@ -192,7 +196,7 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
 
     const renderStepContent = () => {
         switch (step) {
-            case 0:
+            case 0: // Choice screen (only if manual is enabled)
                 return (
                     <div className="grid grid-cols-2 gap-4 py-4">
                         <button onClick={() => { setStep(1); fetchManualMethods(); }} className="flex flex-col items-center justify-center gap-2 rounded-md border p-4 text-center hover:bg-accent hover:border-primary">
@@ -205,7 +209,7 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
                         </button>
                     </div>
                 );
-            case 1:
+            case 1: // Manual deposit flow
                 return selectedManualMethod ? (
                     <div className="space-y-4 py-4">
                         <Button variant="link" onClick={() => { setSelectedManualMethod(null); setStep(1); }} className="p-0 h-auto text-sm">&larr; Back to methods</Button>
@@ -244,10 +248,10 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
                         )}
                     </div>
                 );
-             case 2:
+             case 2: // Automatic deposit flow
                 return (
                      <form onSubmit={handleAutoPayment} className="space-y-4 py-4">
-                        <Button variant="link" onClick={() => setStep(0)} className="p-0 h-auto text-sm">&larr; Back</Button>
+                        {gatewaySettings?.manualTopupEnabled && <Button variant="link" onClick={() => setStep(0)} className="p-0 h-auto text-sm">&larr; Back</Button>}
                         <Alert>
                            <CreditCard className="h-4 w-4" />
                            <AlertTitle>Pay with NagorikPay</AlertTitle>
@@ -272,6 +276,14 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
         }
     }
 
+    const getDialogDescription = () => {
+        if (!gatewaySettings) return "Loading settings...";
+        if (step === 0) return "Choose your preferred deposit method.";
+        if (step === 1) return selectedManualMethod ? "Follow instructions and submit request." : "Select a manual method.";
+        if (step === 2) return "Enter amount for automatic payment.";
+        return "";
+    }
+
     return (
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
@@ -283,12 +295,10 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
                 <DialogHeader>
                     <DialogTitle>Add Money to Wallet</DialogTitle>
                     <DialogDescription>
-                        {step === 0 && "Choose your preferred deposit method."}
-                        {step === 1 && (selectedManualMethod ? "Follow instructions and submit request." : "Select a manual method.")}
-                        {step === 2 && "Enter amount for automatic payment."}
+                       {getDialogDescription()}
                     </DialogDescription>
                 </DialogHeader>
-                {renderStepContent()}
+                {gatewaySettings === null ? <div className="py-4 flex justify-center"><Loader2 className="h-6 w-6 animate-spin"/></div> : renderStepContent()}
                 {step === 1 && selectedManualMethod && (
                     <DialogFooter>
                         <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>

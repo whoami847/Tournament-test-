@@ -263,4 +263,5 @@ export interface NagorikPaySettings {
 
 export interface GatewaySettings {
   nagorikPay: NagorikPaySettings;
+  manualTopupEnabled: boolean;
 }

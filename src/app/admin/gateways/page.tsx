@@ -10,9 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 
 const nagorikPaySchema = z.object({
     accessToken: z.string().min(1, 'API Key is required.'),
@@ -23,6 +25,7 @@ const nagorikPaySchema = z.object({
 
 const formSchema = z.object({
   nagorikPay: nagorikPaySchema,
+  manualTopupEnabled: z.boolean().default(true),
 });
 
 type GatewaySettingsFormValues = z.infer<typeof formSchema>;
@@ -41,6 +44,7 @@ export default function AdminGatewaySettingsPage() {
                 cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL || ''}/payment/verify`,
                 webhookUrl: `${process.env.NEXT_PUBLIC_APP_URL || ''}/api/webhook`,
             },
+            manualTopupEnabled: true,
         },
     });
 
@@ -48,8 +52,11 @@ export default function AdminGatewaySettingsPage() {
         const fetchSettings = async () => {
             setLoading(true);
             const settings = await getGatewaySettings();
-            if (settings && settings.nagorikPay) {
-                form.reset({ nagorikPay: settings.nagorikPay });
+            if (settings) {
+                form.reset({ 
+                    nagorikPay: settings.nagorikPay,
+                    manualTopupEnabled: settings.manualTopupEnabled !== false, // Default to true if not set
+                });
             }
             setLoading(false);
         };
@@ -86,8 +93,41 @@ export default function AdminGatewaySettingsPage() {
             </CardHeader>
             <CardContent>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                         <Tabs defaultValue="nagorikpay" className="w-full">
+                            <CardHeader className="p-0 mb-6">
+                                <CardTitle className="text-xl flex items-center gap-2"><Settings className="h-5 w-5" /> General Settings</CardTitle>
+                            </CardHeader>
+                            <div className="p-4 border rounded-lg">
+                                 <FormField
+                                    control={form.control}
+                                    name="manualTopupEnabled"
+                                    render={({ field }) => (
+                                        <FormItem className="flex flex-row items-center justify-between">
+                                            <div className="space-y-0.5">
+                                                <FormLabel>Manual Top-up System</FormLabel>
+                                                <FormDescription>
+                                                    Allow users to make deposits via manually verified methods.
+                                                </FormDescription>
+                                            </div>
+                                            <FormControl>
+                                                <Switch
+                                                    checked={field.value}
+                                                    onCheckedChange={field.onChange}
+                                                />
+                                            </FormControl>
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        </Tabs>
+
+                        <Separator />
+
+                        <Tabs defaultValue="nagorikpay" className="w-full">
+                             <CardHeader className="p-0 mb-4">
+                                <CardTitle className="text-xl">Automatic Gateways</CardTitle>
+                            </CardHeader>
                             <TabsList>
                                 <TabsTrigger value="nagorikpay">NagorikPay</TabsTrigger>
                             </TabsList>
