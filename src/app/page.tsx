@@ -33,9 +33,9 @@ import { useRouter } from 'next/navigation';
 // --- SUB-COMPONENTS ---
 
 const HomeHeader = () => {
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
     const router = useRouter();
-    const displayName = user?.displayName || user?.email?.split('@')[0] || 'Player';
+    const displayName = profile?.name || user?.displayName || user?.email?.split('@')[0] || 'Player';
     const fallback = displayName.charAt(0).toUpperCase();
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
@@ -52,14 +52,16 @@ const HomeHeader = () => {
         if (!notification.read) {
             await markNotificationAsRead(notification.id);
         }
-        router.push(notification.link);
+        if (notification.link) {
+            router.push(notification.link);
+        }
     }
 
     return (
         <header className="flex items-center justify-between p-4">
             <Link href="/profile" className="flex items-center gap-3 group">
                 <Avatar className="h-10 w-10 border-2 border-primary group-hover:border-amber-400 transition-colors">
-                    <AvatarImage src={user?.photoURL || ''} alt={displayName} data-ai-hint="wizard character" />
+                    <AvatarImage src={profile?.avatar || ''} alt={displayName} data-ai-hint="wizard character" />
                     <AvatarFallback>{fallback}</AvatarFallback>
                 </Avatar>
                 <div>
