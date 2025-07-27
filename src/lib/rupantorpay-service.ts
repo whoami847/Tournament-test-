@@ -27,7 +27,7 @@ export async function initiatePayment(payload: PaymentPayload): Promise<string |
     const { accessToken, successUrl, cancelUrl, failUrl, webhookUrl } = settings.rupantorPay;
 
     const requestBody = {
-      access_token: accessToken,
+      access_token: accessToken, // Added access_token to the body
       transaction_id: `TRN-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
       amount: payload.amount.toString(),
       success_url: successUrl,
@@ -71,7 +71,7 @@ export async function verifyPayment(payload: VerificationPayload) {
     const { accessToken } = settings.rupantorPay;
 
      const requestBody = {
-        access_token: accessToken,
+        access_token: accessToken, // Added access_token to the body
         transaction_id: payload.transaction_id,
     };
 
