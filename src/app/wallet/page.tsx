@@ -37,11 +37,17 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { getGatewaySettings } from "@/lib/gateway-settings-service";
+import { motion } from 'framer-motion';
 
 // --- SUB-COMPONENTS ---
 
 const WalletHeader = ({ profile }: { profile: PlayerProfile | null }) => (
-    <header className="container mx-auto flex items-center justify-between p-4">
+    <motion.header 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="container mx-auto flex items-center justify-between p-4"
+    >
         <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10 border-2 border-primary">
                 <AvatarImage src={profile?.avatar || ''} alt={profile?.name || 'User'} data-ai-hint="wizard character" />
@@ -52,7 +58,7 @@ const WalletHeader = ({ profile }: { profile: PlayerProfile | null }) => (
                 <h1 className="font-bold">{profile?.name || 'Player'}</h1>
             </div>
         </div>
-    </header>
+    </motion.header>
 );
 
 const CopyToClipboard = ({ text, label }: { text: string; label: string }) => {
@@ -444,12 +450,20 @@ const WithdrawDialog = ({ profile }: { profile: PlayerProfile }) => {
 
 const CardStack = ({ balance, profile }: { balance: number, profile: PlayerProfile | null }) => {
     return (
-        <div className={cn("relative h-60 flex items-center justify-center group")}>
+        <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className={cn("relative h-60 flex items-center justify-center group")}
+        >
             {/* Bottom Card */}
-            <div
+            <motion.div
+                initial={{ y: 0, rotate: 0 }}
+                animate={{ y: 6, rotate: -6 }}
+                transition={{ type: 'spring', stiffness: 100, damping: 10 }}
                 className={cn(
-                    "absolute w-full max-w-[320px] h-52 rounded-2xl bg-gradient-to-br from-[#4A2E0C] to-[#8C5A2D] p-6 text-white shadow-lg transition-all duration-500 ease-out",
-                    'translate-y-6 rotate-[-6deg] group-hover:-translate-y-2 group-hover:rotate-[-8deg]'
+                    "absolute w-full max-w-[320px] h-52 rounded-2xl bg-gradient-to-br from-[#4A2E0C] to-[#8C5A2D] p-6 text-white shadow-lg",
+                    'group-hover:-translate-y-2 group-hover:rotate-[-8deg]'
                 )}
                 style={{ zIndex: 10 }}
             >
@@ -457,12 +471,15 @@ const CardStack = ({ balance, profile }: { balance: number, profile: PlayerProfi
                     <p className="font-bold tracking-wider">{profile?.name || 'Player'}</p>
                     <p className="font-bold text-lg italic">Game Card</p>
                 </div>
-            </div>
+            </motion.div>
              {/* Middle Card */}
-            <div
+            <motion.div
+                initial={{ y: 0, rotate: 0 }}
+                animate={{ y: 3, rotate: -3 }}
+                transition={{ type: 'spring', stiffness: 100, damping: 10, delay: 0.05 }}
                 className={cn(
-                    "absolute w-full max-w-[320px] h-52 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 p-6 text-white shadow-lg transition-all duration-500 ease-out",
-                    'translate-y-3 rotate-[-3deg] group-hover:-translate-y-1 group-hover:rotate-[-4deg]'
+                    "absolute w-full max-w-[320px] h-52 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 p-6 text-white shadow-lg",
+                    'group-hover:-translate-y-1 group-hover:rotate-[-4deg]'
                 )}
                 style={{ zIndex: 20 }}
             >
@@ -470,11 +487,14 @@ const CardStack = ({ balance, profile }: { balance: number, profile: PlayerProfi
                     <p className="font-bold tracking-wider">{profile?.name || 'Player'}</p>
                     <p className="font-bold text-lg italic">Game Card</p>
                 </div>
-            </div>
+            </motion.div>
              {/* Top Card */}
-            <div
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
                 className={cn(
-                    "absolute w-full max-w-[320px] h-52 rounded-2xl bg-black p-6 text-white shadow-2xl flex flex-col justify-between transition-all duration-500 ease-out",
+                    "absolute w-full max-w-[320px] h-52 rounded-2xl bg-black p-6 text-white shadow-2xl flex flex-col justify-between",
                     'group-hover:scale-105 group-hover:-translate-y-6'
                 )}
                 style={{ zIndex: 30 }}
@@ -510,8 +530,8 @@ const CardStack = ({ balance, profile }: { balance: number, profile: PlayerProfi
                     {profile && <AddMoneyDialog profile={profile} />}
                     {profile && <WithdrawDialog profile={profile} />}
                 </div>
-            </div>
-        </div>
+            </motion.div>
+        </motion.div>
     );
 }
 
@@ -530,50 +550,78 @@ const TransactionList = ({ transactions }: { transactions: Transaction[] }) => {
         FAILED: { text: "Failed", icon: <XCircle className="h-3 w-3" />, className: "bg-red-500/20 text-red-500" },
     };
 
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        show: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.1
+            }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 20 },
+        show: { opacity: 1, y: 0 }
+    };
+
     return (
-        <section>
+        <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+        >
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">Recent Transactions</h2>
             </div>
-            <div className="space-y-3">
+            <motion.div 
+                className="space-y-3"
+                variants={containerVariants}
+                initial="hidden"
+                animate="show"
+            >
                 {transactions.length > 0 ? (
                     transactions.map((tx) => {
                         const status = (tx.status || 'COMPLETED').toUpperCase() as keyof typeof statusConfig;
                         const config = statusConfig[status];
                         return (
-                            <Card key={tx.id} className="bg-card/80 backdrop-blur-sm border-border/50">
-                                <CardContent className="p-3 flex items-center gap-4">
-                                    {transactionIcons[tx.type] || transactionIcons['fee']}
-                                    <div className="flex-grow">
-                                        <p className="font-semibold">{tx.description}</p>
-                                        <div className="flex items-center gap-2">
-                                            <p className="text-sm text-muted-foreground">{format(new Date(tx.date as string), "PPP, p")}</p>
-                                            {config && (
-                                                <Badge className={cn("text-xs capitalize h-5 px-1.5 gap-1", config.className)}>
-                                                    {config.icon}
-                                                    {config.text}
-                                                </Badge>
-                                            )}
+                            <motion.div key={tx.id} variants={itemVariants}>
+                                <Card className="bg-card/80 backdrop-blur-sm border-border/50">
+                                    <CardContent className="p-3 flex items-center gap-4">
+                                        {transactionIcons[tx.type] || transactionIcons['fee']}
+                                        <div className="flex-grow">
+                                            <p className="font-semibold">{tx.description}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-sm text-muted-foreground">{format(new Date(tx.date as string), "PPP, p")}</p>
+                                                {config && (
+                                                    <Badge className={cn("text-xs capitalize h-5 px-1.5 gap-1", config.className)}>
+                                                        {config.icon}
+                                                        {config.text}
+                                                    </Badge>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                    <p className={cn(
-                                        "font-bold text-base",
-                                        tx.amount > 0 ? "text-green-400" : "text-foreground"
-                                    )}>
-                                        {tx.amount > 0 ? `+` : ``}{tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TK
-                                    </p>
-                                </CardContent>
-                            </Card>
+                                        <p className={cn(
+                                            "font-bold text-base",
+                                            tx.amount > 0 ? "text-green-400" : "text-foreground"
+                                        )}>
+                                            {tx.amount > 0 ? `+` : ``}{tx.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TK
+                                        </p>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
                         )
                     })
                 ) : (
-                    <Card className="bg-card/80 backdrop-blur-sm border-border/50">
-                        <CardContent className="p-6 text-center text-muted-foreground">
-                            You have no recent transactions.
-                        </CardContent>
-                    </Card>
+                    <motion.div variants={itemVariants}>
+                        <Card className="bg-card/80 backdrop-blur-sm border-border/50">
+                            <CardContent className="p-6 text-center text-muted-foreground">
+                                You have no recent transactions.
+                            </CardContent>
+                        </Card>
+                    </motion.div>
                 )}
-            </div>
+            </motion.div>
         </section>
     );
 };
