@@ -15,26 +15,32 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 
-type Format = 'all' | 'BR' | 'CS' | 'LONE WOLF';
-type SubMode = 'all' | 'solo' | 'duo' | 'squad';
-
 const TournamentGridSkeleton = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {Array.from({ length: 6 }).map((_, i) => (
-        <Card key={i}>
-          <Skeleton className="h-48 w-full" />
-          <CardContent className="p-4 space-y-4">
-            <Skeleton className="h-6 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-            <div className="space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-5/6" />
+         <div key={i} className="relative flex flex-col h-full overflow-hidden transition-all duration-300 shadow-lg rounded-2xl bg-card animate-pulse">
+            <div className="relative z-10 flex flex-col flex-grow p-4 text-white">
+                <div className="flex justify-between items-start">
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                    <Skeleton className="h-8 w-8 rounded-full" />
+                </div>
+                <div className="flex-grow flex flex-col justify-end mt-4">
+                    <Skeleton className="h-4 w-1/3 mb-2" />
+                    <Skeleton className="h-8 w-3/4 mb-4" />
+                    <div className="space-y-3">
+                      <Skeleton className="h-5 w-full" />
+                    </div>
+                    <div className="flex-grow"></div>
+                    <div className="mt-auto space-y-4">
+                        <div className="flex justify-between items-center pt-4 border-t border-muted/20">
+                            <Skeleton className="h-5 w-1/3" />
+                            <Skeleton className="h-5 w-1/3" />
+                        </div>
+                        <Skeleton className="h-10 w-full rounded-lg" />
+                    </div>
+                </div>
             </div>
-          </CardContent>
-          <CardFooter>
-            <Skeleton className="h-10 w-full" />
-          </CardFooter>
-        </Card>
+        </div>
       ))}
     </div>
 );
