@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: 'Inter', sans-serif;
-}
-
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -37,22 +33,22 @@ body {
   .dark {
     --background: 229 23% 9%;
     --foreground: 210 40% 98%;
-    --card: 230 22% 13%;
+    --card: 230 22% 13% / 0.5;
     --card-foreground: 210 40% 98%;
-    --popover: 230 22% 9%;
+    --popover: 230 22% 9% / 0.8;
     --popover-foreground: 210 40% 98%;
     --primary: 259 100% 68%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 230 21% 22%;
+    --secondary: 230 21% 22% / 0.5;
     --secondary-foreground: 210 40% 98%;
-    --muted: 230 21% 22%;
+    --muted: 230 21% 22% / 0.5;
     --muted-foreground: 229 8% 61%;
-    --accent: 230 21% 25%;
+    --accent: 230 21% 25% / 0.5;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 230 21% 20%;
-    --input: 230 21% 20%;
+    --border: 230 21% 20% / 0.8;
+    --input: 230 21% 20% / 0.8;
     --ring: 259 100% 68%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
@@ -68,6 +64,7 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
   }
 }
 
@@ -78,5 +75,18 @@ body {
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+  .animate-fade-in-up {
+      animation: fadeInUp 0.5s ease-out forwards;
+  }
+  @keyframes fadeInUp {
+      from {
+          opacity: 0;
+          transform: translateY(20px);
+      }
+      to {
+          opacity: 1;
+          transform: translateY(0);
+      }
   }
 }

@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Home } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function AdminLayout({
   children,
@@ -17,7 +18,12 @@ export default function AdminLayout({
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6">
+      <motion.header 
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-card/80 px-4 backdrop-blur-sm sm:px-6"
+      >
         <div className="flex items-center gap-4">
             {!isRootAdmin ? (
                 <Button variant="outline" size="icon" onClick={() => router.back()}>
@@ -38,9 +44,16 @@ export default function AdminLayout({
                 <AvatarFallback>A</AvatarFallback>
             </Avatar>
         </div>
-      </header>
-      <main className="flex flex-1 flex-col gap-4 bg-muted/20 p-4 sm:p-6">
-        {children}
+      </motion.header>
+      <main className="flex flex-1 flex-col gap-4 bg-background/50 p-4 sm:p-6">
+        <motion.div
+          key={pathname}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: 'easeInOut' }}
+        >
+          {children}
+        </motion.div>
       </main>
     </div>
   );

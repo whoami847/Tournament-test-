@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { Card, CardContent } from "@/components/ui/card";
 import { LayoutDashboard, Users, Swords, List, Settings, LucideIcon, Gamepad2, Image as ImageIcon, ClipboardCheck, Award, Banknote, ListChecks, Upload, History, GitBranch } from "lucide-react";
+import { motion } from 'framer-motion';
 
 const adminControls: { href: string; icon: LucideIcon; label: string }[] = [
   { href: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -19,23 +20,29 @@ const adminControls: { href: string; icon: LucideIcon; label: string }[] = [
   { href: '/admin/gateways', icon: GitBranch, label: 'Gateways' },
 ];
 
-const AdminControlCard = ({ href, icon: Icon, label }: { href: string; icon: LucideIcon; label: string }) => (
-    <Link href={href} className="block">
-        <Card className="hover:bg-accent hover:border-primary transition-colors h-full shadow-md">
-            <CardContent className="flex flex-col items-center justify-center p-6 gap-4 text-center aspect-square">
-                <Icon className="h-10 w-10 text-primary" />
-                <span className="font-semibold mt-2">{label}</span>
-            </CardContent>
-        </Card>
-    </Link>
+const AdminControlCard = ({ href, icon: Icon, label, index }: { href: string; icon: LucideIcon; label: string, index: number }) => (
+    <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.4, delay: index * 0.05 }}
+    >
+        <Link href={href} className="block h-full">
+            <Card className="bg-card/80 backdrop-blur-sm hover:bg-accent hover:border-primary transition-colors h-full shadow-md">
+                <CardContent className="flex flex-col items-center justify-center p-6 gap-4 text-center aspect-square">
+                    <Icon className="h-10 w-10 text-primary" />
+                    <span className="font-semibold mt-2">{label}</span>
+                </CardContent>
+            </Card>
+        </Link>
+    </motion.div>
 );
 
 
 export default function AdminPage() {
     return (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {adminControls.map((control) => (
-                <AdminControlCard key={control.href} {...control} />
+            {adminControls.map((control, index) => (
+                <AdminControlCard key={control.href} {...control} index={index} />
             ))}
         </div>
     );
