@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Match, Round, Team, Tournament } from '@/types';
@@ -246,7 +247,11 @@ const MatchCard = ({ match, highlightTeam1AsWinner, highlightTeam2AsWinner }: { 
     const MatchContent = () => (
         <div className="p-0">
             <TeamDisplay team={team1} score={score1} isWinner={(isCompleted && winner1) || highlightTeam1AsWinner} isLoser={loser1} />
-            <div className="border-t border-border/50 mx-2"></div>
+            <div className="relative border-t border-border/50 mx-2">
+              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-1 text-xs text-muted-foreground">
+                VS
+              </span>
+            </div>
             <TeamDisplay team={team2} score={score2} isWinner={(isCompleted && winner2) || highlightTeam2AsWinner} isLoser={loser2} />
         </div>
     );
