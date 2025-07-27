@@ -1,12 +1,11 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bookmark, Users, Calendar, Ticket, Trophy } from 'lucide-react';
+import { Bookmark, Users, Trophy } from 'lucide-react';
 import type { Tournament } from '@/types';
-import { format } from 'date-fns';
-import Countdown from './countdown';
+import { cn } from '@/lib/utils';
 
 interface TournamentCardProps {
   tournament: Tournament;
@@ -14,83 +13,63 @@ interface TournamentCardProps {
   onBookmarkToggle: () => void;
 }
 
-const statusColors = {
-  upcoming: 'bg-blue-500',
-  live: 'bg-red-500 animate-pulse',
-  completed: 'bg-gray-500',
+const statusColors: Record<string, string> = {
+  upcoming: 'bg-blue-500/80',
+  live: 'bg-red-500/80 animate-pulse',
+  completed: 'bg-gray-500/80',
 };
 
 export default function TournamentCard({ tournament, isBookmarked, onBookmarkToggle }: TournamentCardProps) {
-  const statusColor = statusColors[tournament.status] || 'bg-gray-500';
+  const statusColor = statusColors[tournament.status] || 'bg-gray-500/80';
   const isFull = tournament.teamsCount >= tournament.maxTeams;
 
   return (
     <Link href={`/tournaments/${tournament.id}`} className="block h-full group">
-      <Card className="flex flex-col h-full hover:border-primary/50 transition-colors duration-300 overflow-hidden">
-        <CardHeader className="p-0 relative">
-          <Image 
-            src={tournament.image}
-            alt={tournament.name}
-            width={600}
-            height={400}
-            className="w-full h-48 object-cover"
-            data-ai-hint={tournament.dataAiHint as string}
-          />
-          <div className="absolute top-2 right-2 flex gap-2">
-              <Badge variant="secondary">{tournament.game}</Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="p-4 flex-grow">
-          <div className="flex justify-between items-start">
-              <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors">{tournament.name}</CardTitle>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 flex-shrink-0" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  onBookmarkToggle();
-                }}
-                aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
-              >
-                  <Bookmark className={isBookmarked ? 'fill-primary text-primary' : 'text-muted-foreground'} />
-              </Button>
-          </div>
+      <Card className="relative flex flex-col h-full overflow-hidden transition-all duration-300 shadow-lg rounded-2xl hover:border-primary/50">
+        <Image 
+          src={tournament.image}
+          alt={tournament.name}
+          fill
+          className="object-cover w-full h-full transition-transform duration-500 ease-in-out group-hover:scale-110"
+          data-ai-hint={tournament.dataAiHint as string}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/10" />
 
-          <div className="mt-4 space-y-2 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-primary" />
-              <span>{format(new Date(tournament.startDate), 'PPP')}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-primary" />
-              <span>{tournament.teamsCount} / {tournament.maxTeams} teams</span>
-              {isFull && (
-                <Badge variant="destructive" className="ml-auto">Full</Badge>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-primary" />
-              <span>{tournament.prizePool} TK Prize Pool</span>
-            </div>
-            {tournament.entryFee > 0 && (
-               <div className="flex items-center gap-2">
-                  <Ticket className="h-4 w-4 text-primary" />
-                  <span>{tournament.entryFee} TK Entry Fee</span>
-              </div>
-            )}
+        <div className="relative z-10 flex flex-col flex-grow p-4 text-white">
+          <div className="flex justify-between items-start">
+            <Badge className={cn("border-none", statusColor)}>
+              {tournament.status.charAt(0).toUpperCase() + tournament.status.slice(1)}
+            </Badge>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 flex-shrink-0 bg-black/20 hover:bg-black/40" 
+              onClick={(e) => {
+                e.preventDefault();
+                onBookmarkToggle();
+              }}
+              aria-label={isBookmarked ? "Remove bookmark" : "Add bookmark"}
+            >
+              <Bookmark className={isBookmarked ? 'fill-primary text-primary' : 'text-white/70'} />
+            </Button>
           </div>
-        </CardContent>
-        <CardFooter className="p-4 flex items-center">
-          {tournament.status === 'upcoming' ? (
-            <Countdown targetDate={tournament.startDate} />
-          ) : (
-            <div className="flex items-center gap-2">
-                <div className={`h-2.5 w-2.5 rounded-full ${statusColor}`}></div>
-                <span className="text-sm font-medium capitalize">{tournament.status}</span>
+          
+          <div className="flex-grow flex flex-col justify-end mt-4">
+            <p className="text-sm font-semibold text-primary">{tournament.game}</p>
+            <h3 className="text-2xl font-bold tracking-tight">{tournament.name}</h3>
+            
+            <div className="flex justify-between items-center mt-4 pt-4 border-t border-white/20">
+              <div className="flex items-center gap-2 text-sm">
+                <Users className="h-4 w-4" />
+                <span>{tournament.teamsCount} / {tournament.maxTeams}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Trophy className="h-4 w-4" />
+                <span>{tournament.prizePool} TK</span>
+              </div>
             </div>
-          )}
-        </CardFooter>
+          </div>
+        </div>
       </Card>
     </Link>
   );
