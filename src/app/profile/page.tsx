@@ -60,6 +60,7 @@ import { getNotificationsStream } from '@/lib/notifications-service';
 import { getTournamentsStream } from '@/lib/tournaments-service';
 import { Badge } from '@/components/ui/badge';
 import { motion } from 'framer-motion';
+import { ThemeSwitcher } from '@/components/theme-switcher';
 
 // --- SUB-COMPONENTS ---
 
@@ -731,26 +732,29 @@ export default function ProfilePage() {
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
                 <div className="absolute top-4 right-4 left-4 z-10 flex items-center justify-between">
                     <h1 className="text-xl font-bold text-white">Profile</h1>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="bg-black/20 hover:bg-black/40 text-white hover:text-white rounded-full">
-                                <MoreHorizontal className="h-5 w-5" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                                <Link href="/profile/edit" className="flex items-center gap-2">
-                                  <Pencil className="h-4 w-4" />
-                                  <span>Edit Profile</span>
-                                </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:bg-destructive/10 focus:text-destructive flex items-center gap-2">
-                                <LogOut className="h-4 w-4" />
-                                <span>Log Out</span>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex items-center gap-2">
+                        <ThemeSwitcher />
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="bg-black/20 hover:bg-black/40 text-white hover:text-white rounded-full">
+                                    <MoreHorizontal className="h-5 w-5" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem asChild>
+                                    <Link href="/profile/edit" className="flex items-center gap-2">
+                                      <Pencil className="h-4 w-4" />
+                                      <span>Edit Profile</span>
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:bg-destructive/10 focus:text-destructive flex items-center gap-2">
+                                    <LogOut className="h-4 w-4" />
+                                    <span>Log Out</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
                 </div>
             </div>
 
