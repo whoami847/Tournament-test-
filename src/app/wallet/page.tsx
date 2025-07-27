@@ -167,8 +167,8 @@ const AddMoneyDialog = ({ profile }: { profile: PlayerProfile }) => {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    cus_name: profile.name,
-                    cus_email: profile.email,
+                    fullname: profile.name,
+                    email: profile.email,
                     amount: parseFloat(amount),
                     uid: profile.id,
                     phone: '01234567890' // Placeholder, this should ideally be in profile

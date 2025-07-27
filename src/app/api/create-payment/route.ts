@@ -21,9 +21,9 @@ export async function POST(req: NextRequest) {
         const transaction_id = `TRN-${Date.now()}-${uid.substring(0, 6)}`;
 
         const requestBody = {
-            amount: amount.toString(),
             cus_name: fullname,
             cus_email: email,
+            amount: amount.toString(),
             success_url: successUrl,
             cancel_url: cancelUrl,
             webhook_url: webhookUrl || undefined,
