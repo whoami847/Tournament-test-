@@ -27,7 +27,7 @@ export async function initiatePayment(payload: PaymentPayload): Promise<string |
     const { accessToken, successUrl, cancelUrl, failUrl, webhookUrl } = settings.rupantorPay;
 
     const requestBody = {
-      access_token: accessToken, // Added access_token to the body
+      access_token: accessToken,
       transaction_id: `TRN-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
       amount: payload.amount.toString(),
       success_url: successUrl,
@@ -43,7 +43,11 @@ export async function initiatePayment(payload: PaymentPayload): Promise<string |
     try {
         const response = await fetch(`${RUPANTORPAY_API_BASE_URL}/checkout`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-API-KEY': accessToken,
+                'X-CLIENT': 'Aff tour',
+             },
             body: JSON.stringify(requestBody),
         });
         
@@ -57,6 +61,9 @@ export async function initiatePayment(payload: PaymentPayload): Promise<string |
         }
     } catch (error) {
         console.error('Failed to initiate payment:', error);
+        if (error instanceof TypeError && error.message.includes('fetch failed')) {
+            throw new Error('Network error: Could not connect to the payment gateway.');
+        }
         throw error;
     }
 }
@@ -71,14 +78,18 @@ export async function verifyPayment(payload: VerificationPayload) {
     const { accessToken } = settings.rupantorPay;
 
      const requestBody = {
-        access_token: accessToken, // Added access_token to the body
+        access_token: accessToken,
         transaction_id: payload.transaction_id,
     };
 
     try {
         const response = await fetch(`${RUPANTORPAY_API_BASE_URL}/verify-payment`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-API-KEY': accessToken,
+                'X-CLIENT': 'Aff tour',
+            },
             body: JSON.stringify(requestBody),
         });
 
@@ -92,6 +103,9 @@ export async function verifyPayment(payload: VerificationPayload) {
 
     } catch (error) {
         console.error('Failed to verify payment:', error);
+         if (error instanceof TypeError && error.message.includes('fetch failed')) {
+            throw new Error('Network error: Could not connect to the payment gateway to verify.');
+        }
         throw error;
     }
 }
