@@ -3,9 +3,11 @@ import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bookmark, Users, Trophy } from 'lucide-react';
+import { Bookmark, Users, Trophy, Calendar } from 'lucide-react';
 import type { Tournament } from '@/types';
 import { cn } from '@/lib/utils';
+import Countdown from './countdown';
+import { format } from 'date-fns';
 
 interface TournamentCardProps {
   tournament: Tournament;
@@ -58,14 +60,24 @@ export default function TournamentCard({ tournament, isBookmarked, onBookmarkTog
             <p className="text-sm font-semibold text-primary">{tournament.game}</p>
             <h3 className="text-2xl font-bold tracking-tight">{tournament.name}</h3>
             
+            <div className="mt-4 space-y-3">
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <Calendar className="h-4 w-4" />
+                <span>{format(new Date(tournament.startDate), 'PPP, p')}</span>
+              </div>
+              {tournament.status === 'upcoming' && (
+                <Countdown targetDate={tournament.startDate as string} />
+              )}
+            </div>
+
             <div className="flex justify-between items-center mt-4 pt-4 border-t border-white/20">
               <div className="flex items-center gap-2 text-sm">
                 <Users className="h-4 w-4" />
-                <span>{tournament.teamsCount} / {tournament.maxTeams}</span>
+                <span>{tournament.teamsCount} / {tournament.maxTeams} teams</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <Trophy className="h-4 w-4" />
-                <span>{tournament.prizePool} TK</span>
+                <span>{tournament.prizePool} TK Prize Pool</span>
               </div>
             </div>
           </div>
