@@ -15,13 +15,6 @@ import { ArrowLeft } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EditPointsForm } from '@/components/admin/edit-points-form';
 
-export async function generateStaticParams() {
-  const tournaments = await getTournaments();
-  return tournaments.map((tournament) => ({
-    id: tournament.id,
-  }));
-}
-
 const EditTournamentPageSkeleton = () => (
     <div className="space-y-6 animate-pulse">
         <div className="flex items-center gap-4">
