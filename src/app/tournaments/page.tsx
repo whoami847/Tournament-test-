@@ -20,28 +20,18 @@ import { cn } from '@/lib/utils';
 const TournamentGridSkeleton = () => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {Array.from({ length: 6 }).map((_, i) => (
-         <Card key={i} className="relative flex flex-col h-[450px] overflow-hidden transition-all duration-300 shadow-lg rounded-2xl bg-card/50 backdrop-blur-sm animate-pulse">
-            <div className="relative z-10 flex flex-col flex-grow p-4 text-white">
-                <div className="flex justify-between items-start">
-                    <Skeleton className="h-6 w-20 rounded-full" />
-                    <Skeleton className="h-8 w-8 rounded-full" />
+        <Card key={i} className="animate-pulse">
+            <CardContent className="p-4">
+                <Skeleton className="h-48 w-full" />
+                <div className="space-y-2 mt-4">
+                    <Skeleton className="h-4 w-1/4" />
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
                 </div>
-                <div className="flex-grow flex flex-col justify-end mt-4">
-                    <Skeleton className="h-4 w-1/3 mb-2" />
-                    <Skeleton className="h-8 w-3/4 mb-4" />
-                    <div className="space-y-3">
-                      <Skeleton className="h-5 w-full" />
-                    </div>
-                    <div className="flex-grow"></div>
-                    <div className="mt-auto space-y-4">
-                        <div className="flex justify-between items-center pt-4 border-t border-muted/20">
-                            <Skeleton className="h-5 w-1/3" />
-                            <Skeleton className="h-5 w-1/3" />
-                        </div>
-                        <Skeleton className="h-10 w-full rounded-lg" />
-                    </div>
-                </div>
-            </div>
+            </CardContent>
+            <CardFooter>
+                 <Skeleton className="h-10 w-full" />
+            </CardFooter>
         </Card>
       ))}
     </div>
@@ -58,20 +48,23 @@ const GameFilterCard = ({ game, isSelected, onSelect }: { game: GameCategory | {
         <Card
             onClick={onSelect}
             className={cn(
-                "cursor-pointer transition-all duration-300 bg-card/50 backdrop-blur-sm border-2",
+                "cursor-pointer transition-all duration-300 bg-card/50 backdrop-blur-sm border-2 rounded-xl overflow-hidden",
                 isSelected ? "border-primary shadow-lg shadow-primary/20" : "border-transparent hover:border-primary/50"
             )}
         >
-            <CardContent className="p-3 flex items-center gap-4">
+            <div className="relative aspect-square">
                 {game.id !== 'all' ? (
-                     <Image src={game.image} alt={game.name} width={48} height={48} className="rounded-md object-cover aspect-square" data-ai-hint={game.dataAiHint} />
+                     <Image src={game.image} alt={game.name} fill className="object-cover" data-ai-hint={game.dataAiHint} />
                 ) : (
-                    <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center">
-                        <span className="text-2xl font-bold">All</span>
+                    <div className="h-full w-full bg-muted flex items-center justify-center">
+                        <span className="text-2xl font-bold text-muted-foreground">All</span>
                     </div>
                 )}
-                <h4 className="font-bold text-lg">{game.name}</h4>
-            </CardContent>
+                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                 <div className="absolute bottom-0 left-0 p-3">
+                    <h4 className="font-bold text-lg text-primary-foreground">{game.name}</h4>
+                </div>
+            </div>
         </Card>
     </motion.div>
 );
@@ -153,7 +146,7 @@ export default function TournamentsPage() {
   return (
     <div className="container mx-auto px-4 py-8 md:pb-8 pb-24">
       <div className="space-y-8">
-         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             <GameFilterCard
                 game={{ id: 'all', name: 'All Games', image: '' }}
                 isSelected={selectedGame === 'all'}
