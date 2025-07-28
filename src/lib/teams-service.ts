@@ -168,7 +168,7 @@ export const leaveTeam = async (userId: string, teamId: string) => {
             const userData = userDoc.data() as PlayerProfile;
 
             if (teamData.leaderId === userId && teamData.members.length > 1) {
-                throw new Error("Leader must transfer leadership before leaving, or be the last member.");
+                throw new Error("Leader must transfer ownership before leaving, or be the last member.");
             }
 
             const updatedMembers = teamData.members.filter(m => m.uid !== userId);
@@ -244,6 +244,69 @@ export const removeMemberFromTeam = async (teamId: string, memberGamerId: string
                 transaction.update(userDocRef, { teamId: '' });
             }
         });
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+};
+
+
+export const deleteTeam = async (teamId: string) => {
+    const teamDocRef = doc(teamsCollection, teamId);
+    const batch = writeBatch(firestore);
+
+    try {
+        const teamDoc = await getDoc(teamDocRef);
+        if (!teamDoc.exists()) throw new Error("Team not found.");
+
+        const teamData = teamDoc.data() as UserTeam;
+
+        // Reset teamId for all members
+        for (const member of teamData.members) {
+            if (member.uid) {
+                const userRef = doc(usersCollection, member.uid);
+                batch.update(userRef, { teamId: '' });
+            }
+        }
+
+        // Delete the team document
+        batch.delete(teamDocRef);
+
+        await batch.commit();
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+};
+
+export const transferOwnership = async (teamId: string, currentLeaderId: string, newLeaderId: string) => {
+    const teamDocRef = doc(teamsCollection, teamId);
+    
+    try {
+        await runTransaction(firestore, async (transaction) => {
+            const teamDoc = await transaction.get(teamDocRef);
+            if (!teamDoc.exists()) throw new Error("Team not found.");
+
+            const teamData = teamDoc.data() as UserTeam;
+            if (teamData.leaderId !== currentLeaderId) throw new Error("Only the current leader can transfer ownership.");
+            if (currentLeaderId === newLeaderId) throw new Error("Cannot transfer ownership to self.");
+
+            const newLeaderIndex = teamData.members.findIndex(m => m.uid === newLeaderId);
+            if (newLeaderIndex === -1) throw new Error("New leader not found in the team.");
+
+            const currentLeaderIndex = teamData.members.findIndex(m => m.uid === currentLeaderId);
+            if (currentLeaderIndex === -1) throw new Error("Current leader not found in the team.");
+
+            const updatedMembers = [...teamData.members];
+            updatedMembers[newLeaderIndex].role = 'Leader';
+            updatedMembers[currentLeaderIndex].role = 'Member';
+            
+            transaction.update(teamDocRef, {
+                leaderId: newLeaderId,
+                members: updatedMembers,
+            });
+        });
+
         return { success: true };
     } catch (error: any) {
         return { success: false, error: error.message };

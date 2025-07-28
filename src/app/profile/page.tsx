@@ -16,7 +16,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, User, Gamepad2, Mail, Calendar, Users, Shield, Trophy, Star, Flame, LogOut, Pencil, Check, X, Loader2, UserPlus, LogOut as LeaveIcon, Search, Award, Trash2 } from 'lucide-react';
+import { MoreHorizontal, User, Gamepad2, Mail, Calendar, Users, Shield, Trophy, Star, Flame, LogOut, Pencil, Check, X, Loader2, UserPlus, LogOut as LeaveIcon, Search, Award, Trash2, Crown } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { signOutUser } from '@/lib/auth-service';
@@ -54,7 +54,9 @@ import {
     respondToInvite,
     leaveTeam,
     removeMemberFromTeam,
-    updateTeamMember
+    updateTeamMember,
+    deleteTeam,
+    transferOwnership,
 } from '@/lib/teams-service';
 import { getNotificationsStream } from '@/lib/notifications-service';
 import { getTournamentsStream } from '@/lib/tournaments-service';
@@ -114,8 +116,10 @@ const TeamInfo = ({ profile }: { profile: PlayerProfile }) => {
     const [isCreateTeamOpen, setCreateTeamOpen] = useState(false);
     const [isAddMemberOpen, setAddMemberOpen] = useState(false);
     const [isEditMemberOpen, setEditMemberOpen] = useState(false);
+    const [isDeleteTeamAlertOpen, setDeleteTeamAlertOpen] = useState(false);
     const [memberToEdit, setMemberToEdit] = useState<TeamMember | null>(null);
     const [memberToRemove, setMemberToRemove] = useState<TeamMember | null>(null);
+    const [memberToPromote, setMemberToPromote] = useState<TeamMember | null>(null);
     
     // Form states
     const [newTeamName, setNewTeamName] = useState('');
@@ -275,6 +279,32 @@ const TeamInfo = ({ profile }: { profile: PlayerProfile }) => {
         setIsSubmitting(false);
     };
 
+    const handleDeleteTeam = async () => {
+        if (!team) return;
+        setIsSubmitting(true);
+        const result = await deleteTeam(team.id);
+        if (result.success) {
+            toast({ title: "Team Deleted", description: `The team "${team.name}" has been deleted.` });
+            setDeleteTeamAlertOpen(false);
+        } else {
+            toast({ title: "Error", description: result.error, variant: "destructive" });
+        }
+        setIsSubmitting(false);
+    };
+    
+    const handleTransferOwnership = async () => {
+        if (!team || !memberToPromote || !memberToPromote.uid) return;
+        setIsSubmitting(true);
+        const result = await transferOwnership(team.id, profile.id, memberToPromote.uid);
+        if (result.success) {
+            toast({ title: "Ownership Transferred", description: `${memberToPromote.name} is now the new team leader.` });
+            setMemberToPromote(null);
+        } else {
+            toast({ title: "Error", description: result.error, variant: "destructive" });
+        }
+        setIsSubmitting(false);
+    };
+
 
     if (loading) {
         return <Card><CardHeader><CardTitle>My Team</CardTitle></CardHeader><CardContent><p>Loading team info...</p></CardContent></Card>
@@ -317,6 +347,7 @@ const TeamInfo = ({ profile }: { profile: PlayerProfile }) => {
     }
     
     const isLeader = team.leaderId === profile.id;
+    const isTeamFull = team.members.length >= 5;
 
     return (
     <>
@@ -333,7 +364,7 @@ const TeamInfo = ({ profile }: { profile: PlayerProfile }) => {
                     <DropdownMenuContent align="end">
                          {isLeader && (
                             <DialogTrigger asChild>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem disabled={isTeamFull}>
                                     <UserPlus className="mr-2 h-4 w-4" />
                                     <span>Add Member</span>
                                 </DropdownMenuItem>
@@ -345,12 +376,15 @@ const TeamInfo = ({ profile }: { profile: PlayerProfile }) => {
                                 <span>Leave Team</span>
                             </DropdownMenuItem>
                         )}
-                         {isLeader && team.members.length === 1 && (
-                            <DropdownMenuItem onSelect={handleLeaveTeam} disabled={isSubmitting} className="text-destructive focus:text-destructive">
-                                <LeaveIcon className="mr-2 h-4 w-4" />
-                                <span>Disband Team</span>
-                            </DropdownMenuItem>
-                        )}
+                         {isLeader && (
+                            <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onSelect={() => setDeleteTeamAlertOpen(true)} className="text-destructive focus:text-destructive">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    <span>Delete Team</span>
+                                </DropdownMenuItem>
+                            </>
+                         )}
                     </DropdownMenuContent>
                 </DropdownMenu>
                 <DialogContent>
@@ -448,6 +482,12 @@ const TeamInfo = ({ profile }: { profile: PlayerProfile }) => {
                                         <DropdownMenuItem onSelect={() => openEditDialog(member)}>
                                             <Pencil className="mr-2 h-4 w-4" /> Edit
                                         </DropdownMenuItem>
+                                        {member.uid && (
+                                            <DropdownMenuItem onSelect={() => setMemberToPromote(member)}>
+                                                <Crown className="mr-2 h-4 w-4" /> Transfer Ownership
+                                            </DropdownMenuItem>
+                                        )}
+                                        <DropdownMenuSeparator />
                                         <DropdownMenuItem onSelect={() => setMemberToRemove(member)} className="text-destructive focus:text-destructive">
                                             <Trash2 className="mr-2 h-4 w-4" /> Remove
                                         </DropdownMenuItem>
@@ -500,6 +540,42 @@ const TeamInfo = ({ profile }: { profile: PlayerProfile }) => {
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction onClick={handleRemoveMember} disabled={isSubmitting} className="bg-destructive hover:bg-destructive/90">
                     {isSubmitting ? <Loader2 className="animate-spin" /> : "Remove"}
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+    
+    {/* Delete Team Confirmation */}
+     <AlertDialog open={isDeleteTeamAlertOpen} onOpenChange={setDeleteTeamAlertOpen}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete the team "{team.name}" and remove all members.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteTeam} disabled={isSubmitting} className="bg-destructive hover:bg-destructive/90">
+                    {isSubmitting ? <Loader2 className="animate-spin" /> : "Yes, Delete Team"}
+                </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+    </AlertDialog>
+
+    {/* Transfer Ownership Confirmation */}
+    <AlertDialog open={!!memberToPromote} onOpenChange={(open) => !open && setMemberToPromote(null)}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Transfer Ownership?</AlertDialogTitle>
+                <AlertDialogDescription>
+                    Are you sure you want to make {memberToPromote?.name} the new leader of {team.name}? You will become a member and lose leadership privileges.
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleTransferOwnership} disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="animate-spin" /> : "Confirm Transfer"}
                 </AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>
@@ -731,12 +807,12 @@ export default function ProfilePage() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent" />
                 <div className="absolute top-4 right-4 left-4 z-10 flex items-center justify-between">
-                    <h1 className="text-xl font-bold text-primary-foreground">Profile</h1>
+                    <h1 className="text-xl font-bold text-foreground">Profile</h1>
                     <div className="flex items-center gap-2">
                         <ThemeSwitcher />
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="bg-black/20 hover:bg-black/40 text-white hover:text-white rounded-full">
+                                <Button variant="ghost" size="icon" className="bg-black/20 hover:bg-black/40 text-primary-foreground hover:text-primary-foreground rounded-full">
                                     <MoreHorizontal className="h-5 w-5" />
                                 </Button>
                             </DropdownMenuTrigger>
