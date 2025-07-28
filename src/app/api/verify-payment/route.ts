@@ -5,10 +5,6 @@ import { db } from '@/lib/firebaseAdmin';
 
 export async function POST(req: NextRequest) {
     try {
-        if (!db) {
-            return NextResponse.json({ message: 'Firebase Admin not configured.' }, { status: 500 });
-        }
-
         const { transaction_id } = await req.json();
 
         if (!transaction_id) {
@@ -77,7 +73,6 @@ export async function POST(req: NextRequest) {
 }
 
 async function checkIfTransactionProcessed(transactionId: string): Promise<boolean> {
-    if (!db) return false;
     const transactionDoc = await db.collection('transactions').doc(transactionId).get();
     return transactionDoc.exists;
 }
