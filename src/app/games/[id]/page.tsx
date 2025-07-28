@@ -11,13 +11,6 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
-export async function generateStaticParams() {
-  const games = await getGames();
-  return games.map((game) => ({
-    id: game.id,
-  }));
-}
-
 const GameDetailsSkeleton = () => (
     <div className="container mx-auto px-4 py-8 md:pb-8 pb-24 animate-pulse">
         <Skeleton className="h-10 w-24 mb-8" />

@@ -21,19 +21,21 @@ if (!serviceAccount.project_id) {
     console.warn(
       'Firebase Admin SDK not initialized. Please configure your service account key in src/lib/firebaseAdmin.ts'
     );
-}
-
-
-if (!admin.apps.length) {
-    try {
-        admin.initializeApp({
-            // @ts-ignore
-            credential: admin.credential.cert(serviceAccount),
-        });
-    } catch (error: any) {
-        console.error('Firebase Admin Initialization Error:', error.message);
+    // Export null for db when not configured
+    export const db = null;
+    export default null;
+} else {
+    if (!admin.apps.length) {
+        try {
+            admin.initializeApp({
+                // @ts-ignore
+                credential: admin.credential.cert(serviceAccount),
+            });
+        } catch (error: any) {
+            console.error('Firebase Admin Initialization Error:', error.message);
+        }
     }
-}
 
-export const db = admin.firestore();
-export default admin;
+    export const db = admin.firestore();
+    export default admin;
+}
