@@ -10,13 +10,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getGamesStream } from '@/lib/games-service';
-import { ImageUpload } from './image-upload';
 
 const formSchema = z.object({
   name: z.string().min(5, "Tournament name must be at least 5 characters."),
   game: z.string().min(1, "Please select a game."),
-  image: z.string().min(1, "Please upload a tournament banner."),
-  dataAiHint: z.string().min(1, "AI Hint is required for the image."),
   prizePool: z.string().min(1, "Prize pool is required."),
   entryFee: z.coerce.number().min(0),
   maxTeams: z.coerce.number().int().min(4).max(64),
@@ -42,8 +39,6 @@ export function EditInfoForm({ tournament, onSave }: EditInfoFormProps) {
         defaultValues: {
             name: tournament.name,
             game: tournament.game,
-            image: tournament.image,
-            dataAiHint: tournament.dataAiHint || 'esports tournament banner',
             prizePool: tournament.prizePool,
             entryFee: tournament.entryFee,
             maxTeams: tournament.maxTeams,
@@ -57,35 +52,6 @@ export function EditInfoForm({ tournament, onSave }: EditInfoFormProps) {
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <FormField
-                    control={form.control}
-                    name="image"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Tournament Banner</FormLabel>
-                            <FormControl>
-                                <ImageUpload
-                                    initialImageUrl={field.value}
-                                    onUploadComplete={(url) => {
-                                        form.setValue('image', url, { shouldValidate: true });
-                                    }}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="dataAiHint"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Image AI Hint</FormLabel>
-                            <FormControl><Input placeholder="e.g., fire battle action" {...field} /></FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
                 <FormField
                     control={form.control}
                     name="name"
